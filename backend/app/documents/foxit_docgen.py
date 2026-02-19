@@ -59,7 +59,7 @@ class FoxitDocGenClient:
         """
         Starts HTML to PDF conversion.
         """
-        url = f"{self.base_url}/pdf-services/api/documents/convert/html-to-pdf"
+        url = f"{self.base_url}/pdf-services/api/documents/create/pdf-from-html"
         payload = {"documentId": document_id}
         
         try:
