@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+python-multipart
+requests
+google-genai
+deepgram-sdk
+pydantic
+pydantic-settings
+python-dotenv
+pytest
+httpx
+pypdf
+opencv-python-headless
+numpy

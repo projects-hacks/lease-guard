@@ -1,0 +1,38 @@
+# General
+.DS_Store
+.idea/
+.vscode/
+*.log
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node.js
+node_modules/
+dist/
+.next/
+out/
+coverage/
+
+# Sanity
+sanity/node_modules/
+sanity/dist/
+sanity/.sanity/
+
+# Terraform/Infrastructure
+.terraform/
+*.tfstate
+*.tfstate.backup
