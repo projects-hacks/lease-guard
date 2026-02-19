@@ -36,32 +36,95 @@ class FoxitDocGenClient:
 
     # Token exchange restored
 
-    def generate_pdf(self, template_html: str, data: dict) -> bytes:
+    def upload_file(self, file_content: bytes, filename: str, content_type: str) -> str:
         """
-        Generates a PDF from an HTML template and data.
+        Uploads a file and returns the document ID.
         """
-        # Note: Foxit Doc Gen API might take a template ID or raw HTML/JSON.
-        # Assuming a simple HTML -> PDF conversion or Template-based generation.
-        # For this hackathon, let's assume we send HTML/Data. 
-        # But commonly use POST /generate with template.
+        url = f"{self.base_url}/pdf-services/api/documents/upload"
+        headers = self.headers.copy()
+        if "Content-Type" in headers:
+            del headers["Content-Type"]
         
-        url = f"{self.base_url}/generate"
-        payload = {
-            "html": template_html, 
-            "data": data,
-            "engine": "phantom" # or similar
-        }
+        files = {'file': (filename, file_content, content_type)}
         
-        # If the API requires a template file uploaded first, we would need that step.
-        # Simplified flow:
+        try:
+            response = requests.post(url, headers=headers, files=files)
+            response.raise_for_status()
+            return response.json().get("documentId")
+        except Exception as e:
+            print(f"Foxit Upload Error: {e}")
+            return None
+
+    def start_html_conversion(self, document_id: str) -> str:
+        """
+        Starts HTML to PDF conversion.
+        """
+        url = f"{self.base_url}/pdf-services/api/documents/convert/html-to-pdf"
+        payload = {"documentId": document_id}
+        
         try:
             response = requests.post(url, headers=self.headers, json=payload)
-            response.raise_for_status()
-            return response.content # Returns PDF bytes
+            if response.ok:
+                return response.json().get("taskId")
+            print(f"Conversion Start Failed: {response.text}")
         except Exception as e:
-            # Fallback for dev if API fails/not enabled
+            print(f"Start Conversion Error: {e}")
+        return None
+
+    def poll_status(self, task_id: str) -> bytes:
+        """
+        Polls status and returns PDF bytes.
+        """
+        url = f"{self.base_url}/pdf-services/api/tasks/{task_id}"
+        import time
+        
+        for _ in range(30):
+            try:
+                response = requests.get(url, headers=self.headers)
+                data = response.json()
+                status = data.get("status")
+                
+                if status == "COMPLETED" or status == "SUCCEEDED":
+                    if "resultDocumentId" in data:
+                        doc_id = data["resultDocumentId"]
+                        down_url = f"{self.base_url}/pdf-services/api/documents/{doc_id}/download"
+                        return requests.get(down_url, headers=self.headers).content
+                elif status == "FAILED":
+                    raise Exception(f"Conversion failed: {data}")
+                
+                time.sleep(1)
+            except Exception as e:
+                print(f"Polling error: {e}")
+                time.sleep(1)
+        
+        raise Exception("Conversion timed out")
+
+    def generate_pdf(self, template_html: str, data: dict) -> bytes:
+        """
+        Generates a PDF by uploading HTML and converting it.
+        """
+        try:
+            # 1. Upload HTML
+            doc_id = self.upload_file(
+                template_html.encode('utf-8'), 
+                "template.html", 
+                "text/html"
+            )
+            
+            if not doc_id:
+                raise Exception("Upload failed")
+                
+            # 2. Start Conversion
+            task_id = self.start_html_conversion(doc_id)
+            if not task_id:
+                raise Exception("Conversion start failed")
+                
+            # 3. Poll & Download
+            return self.poll_status(task_id)
+
+        except Exception as e:
             print(f"Foxit DocGen failed: {e}. Returning mock PDF bytes.")
-            return b"%PDF-1.4 Mock PDF Content"
+            return b"%PDF-1.4 Mock PDF Content (Error: " + str(e).encode() + b")"
 
     def create_counter_letter(self, tenant_name: str, landlord_name: str, clause: dict, state: str) -> bytes:
         """
