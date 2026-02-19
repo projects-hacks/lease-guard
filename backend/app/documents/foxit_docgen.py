@@ -45,7 +45,7 @@ class FoxitDocGenClient:
         # For this hackathon, let's assume we send HTML/Data. 
         # But commonly use POST /generate with template.
         
-        url = f"{self.BASE_URL}/generate"
+        url = f"{self.base_url}/generate"
         payload = {
             "html": template_html, 
             "data": data,

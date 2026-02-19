@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel
 from app.documents.foxit_docgen import FoxitDocGenClient
+import requests
+import urllib.parse
 
 router = APIRouter()
 
@@ -45,9 +47,10 @@ async def generate_condition_report_pdf(report_id: str):
         # client.py only has save_analysis. Let's hack a quick fetch here or better, add to SanityClient.
         
         # Quick fetch
-        url = f"https://{sanity.project_id}.api.sanity.io/v2024-02-18/data/query/{sanity.dataset}?query={requests.utils.quote(query)}"
+        encoded_query = urllib.parse.quote(query)
+        url = f"https://{sanity.project_id}.api.sanity.io/v2024-02-18/data/query/{sanity.dataset}?query={encoded_query}"
         headers = {"Authorization": f"Bearer {sanity.token}"}
-        import requests
+        
         res = requests.get(url, headers=headers)
         res.raise_for_status()
         data = res.json().get("result")
