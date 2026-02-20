@@ -22,16 +22,33 @@ export default function DownloadReportButton({ reportId }: Props) {
             if (!res.ok) throw new Error("Failed to generate PDF");
 
             const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
 
             if (isIOS()) {
-                // iOS Safari: programmatic clicks are blocked — open PDF in browser tab
-                // The user can then use the Share Sheet to save to Files
-                window.open(url, "_blank");
-                // Cleanup after short delay
+                // Feature detect Web Share API for files (iOS 15+)
+                const file = new File([blob], `condition-report-${reportId}.pdf`, { type: "application/pdf" });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: "Condition Report",
+                        });
+                        return;
+                    } catch (shareErr: any) {
+                        // User cancelled the share sheet
+                        if (shareErr.name !== "AbortError") {
+                            console.error("Share failed:", shareErr);
+                        }
+                        return;
+                    }
+                }
+
+                // Classic fallback for very old iOS versions
+                const url = URL.createObjectURL(blob);
+                window.location.href = url;
                 setTimeout(() => URL.revokeObjectURL(url), 5000);
             } else {
                 // Desktop / Android Chrome: programmatic download works fine
+                const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
                 a.download = `condition-report-${reportId}.pdf`;
