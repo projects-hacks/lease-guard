@@ -5,14 +5,26 @@ import { DollarSign, MapPin, Search, Mail, Loader2, ArrowRight, CheckCircle2 } f
 import { cn } from "@/lib/utils";
 
 interface RentAnalysis {
-    is_rent_control_likely: boolean;
-    average_market_rent: string;
-    market_summary: string;
-    recommendation: string;
+    market_stats: {
+        average: number;
+        market_summary: string;
+    };
+    analysis: {
+        rating: string;
+        color: string;
+        difference: number;
+        percentage_diff: number;
+        rent_control_applies: boolean;
+        max_legal_increase: string | null;
+    };
+    rent_laws: {
+        explanation: string;
+    } | null;
 }
 
 export default function RentCalculator() {
-    const [city, setCity] = useState("");
+    const [zipCode, setZipCode] = useState("");
+    const [stateCode, setStateCode] = useState("");
     const [currentRent, setCurrentRent] = useState("");
     const [bedrooms, setBedrooms] = useState("1");
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -22,7 +34,7 @@ export default function RentCalculator() {
 
     const handleAnalyze = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!city || !currentRent) return;
+        if (!zipCode || !stateCode || !currentRent) return;
         setIsAnalyzing(true);
         setAnalysis(null);
         setLetterPdf(null);
@@ -32,9 +44,10 @@ export default function RentCalculator() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    city,
-                    current_rent: parseFloat(currentRent),
-                    bedrooms: parseInt(bedrooms)
+                    zipCode: zipCode,
+                    state: stateCode,
+                    bedrooms: parseInt(bedrooms),
+                    price: parseFloat(currentRent)
                 })
             });
 
@@ -50,7 +63,7 @@ export default function RentCalculator() {
     };
 
     const handleGenerateLetter = async () => {
-        if (!analysis || !city) return;
+        if (!analysis || !stateCode) return;
         setIsGeneratingLetter(true);
 
         try {
@@ -61,17 +74,30 @@ export default function RentCalculator() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    tenant_name: tenantName,
-                    landlord_name: landlordName,
-                    property_address: city,
-                    current_rent: currentRent,
-                    market_average_rent: analysis.average_market_rent
+                    tenantName: tenantName,
+                    landlordName: landlordName,
+                    currentRent: parseFloat(currentRent),
+                    marketAverage: analysis.market_stats.average,
+                    state: stateCode
                 })
             });
 
             if (!res.ok) throw new Error("Failed to generate letter");
-            const data = await res.json();
-            setLetterPdf(data.pdf);
+
+            // Backend returns raw PDF bytes for /generate/negotiation-letter, or optionally a JSON with .pdf if changed. 
+            // In documents.py it returns Response(content=pdf_bytes, media_type="application/pdf").
+            // So we need to handle blob response.
+
+            const blob = await res.blob();
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = () => {
+                const base64data = reader.result as string;
+                // Since our original code was looking for `data.pdf`, and the a.href="data:application/pdf;base64,${letterPdf}",
+                // We simplify by just setting the full data URL.
+                setLetterPdf(base64data);
+            };
+
         } catch (error) {
             console.error(error);
             alert("Failed to generate letter.");
@@ -95,22 +121,34 @@ export default function RentCalculator() {
                 </div>
 
                 <form onSubmit={handleAnalyze} className="space-y-6">
-                    <div className="grid gap-5 sm:grid-cols-3">
+                    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-foreground/90">City / Neighborhood</label>
+                            <label className="text-sm font-medium text-foreground/90">Zip Code</label>
                             <div className="relative">
-                                <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                 <input
                                     type="text"
-                                    placeholder="e.g. San Francisco, CA"
-                                    value={city}
-                                    onChange={(e) => setCity(e.target.value)}
-                                    className="w-full pl-9 h-11 bg-background/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
+                                    placeholder="e.g. 94107"
+                                    value={zipCode}
+                                    onChange={(e) => setZipCode(e.target.value)}
+                                    className="w-full px-4 h-11 bg-background/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
                                 />
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-foreground/90">Your Rent /mo</label>
+                            <label className="text-sm font-medium text-foreground/90">State</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="e.g. CA"
+                                    maxLength={2}
+                                    value={stateCode}
+                                    onChange={(e) => setStateCode(e.target.value.toUpperCase())}
+                                    className="w-full px-4 h-11 bg-background/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-foreground/90">Your Rent</label>
                             <div className="relative">
                                 <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                 <input
@@ -123,7 +161,7 @@ export default function RentCalculator() {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-foreground/90">Bedrooms</label>
+                            <label className="text-sm font-medium text-foreground/90">Layout</label>
                             <select
                                 value={bedrooms}
                                 onChange={(e) => setBedrooms(e.target.value)}
@@ -139,7 +177,7 @@ export default function RentCalculator() {
 
                     <button
                         type="submit"
-                        disabled={isAnalyzing || !city || !currentRent}
+                        disabled={isAnalyzing || !zipCode || !stateCode || !currentRent}
                         className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 hover:scale-[1.02] active:scale-95 shadow-lg shadow-primary/20"
                     >
                         {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
@@ -154,20 +192,24 @@ export default function RentCalculator() {
                     <div className="grid sm:grid-cols-2 gap-4">
                         <div className="p-5 rounded-xl bg-background/40 border border-white/5 space-y-1">
                             <p className="text-sm font-medium text-muted-foreground">Market Average</p>
-                            <p className="text-3xl font-bold text-foreground">{analysis.average_market_rent}</p>
+                            <p className="text-3xl font-bold text-foreground">
+                                ${analysis.market_stats.average.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                            </p>
                         </div>
                         <div className={cn(
                             "p-5 rounded-xl border space-y-1",
-                            analysis.is_rent_control_likely
-                                ? "bg-amber-500/10 border-amber-500/20"
-                                : "bg-background/40 border-white/5"
+                            analysis.analysis.color === "green" ? "bg-emerald-500/10 border-emerald-500/20" :
+                                analysis.analysis.color === "red" ? "bg-red-500/10 border-red-500/20" :
+                                    "bg-amber-500/10 border-amber-500/20"
                         )}>
-                            <p className="text-sm font-medium text-muted-foreground">Rent Control Status</p>
+                            <p className="text-sm font-medium text-muted-foreground">Rating</p>
                             <p className={cn(
                                 "text-lg font-bold",
-                                analysis.is_rent_control_likely ? "text-amber-500" : "text-foreground"
+                                analysis.analysis.color === "green" ? "text-emerald-500" :
+                                    analysis.analysis.color === "red" ? "text-red-500" :
+                                        "text-amber-500"
                             )}>
-                                {analysis.is_rent_control_likely ? "Likely Protected" : "Standard Rules Apply"}
+                                {analysis.analysis.rating} ({analysis.analysis.percentage_diff > 0 ? "+" : ""}{analysis.analysis.percentage_diff.toFixed(1)}%)
                             </p>
                         </div>
                     </div>
@@ -175,17 +217,21 @@ export default function RentCalculator() {
                     <div className="space-y-4">
                         <div>
                             <h3 className="text-lg font-semibold border-b border-white/5 pb-2 mb-3">Market Intel (You.com)</h3>
-                            <p className="text-sm text-foreground/80 leading-relaxed bg-background/30 p-4 rounded-xl border border-white/5">{analysis.market_summary}</p>
+                            <p className="text-sm text-foreground/80 leading-relaxed bg-background/30 p-4 rounded-xl border border-white/5">{analysis.market_stats.market_summary}</p>
                         </div>
-                        <div>
-                            <h3 className="text-lg font-semibold border-b border-white/5 pb-2 mb-3">AI Recommendation</h3>
-                            <p className="text-sm font-medium text-primary leading-relaxed">{analysis.recommendation}</p>
-                        </div>
+                        {analysis.rent_laws?.explanation && (
+                            <div>
+                                <h3 className="text-lg font-semibold border-b border-white/5 pb-2 mb-3">Rent Control Laws</h3>
+                                <p className="text-sm font-medium text-muted-foreground leading-relaxed p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/10">{analysis.rent_laws.explanation}</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Generate Letter Button */}
                     <div className="pt-4 border-t border-white/5 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                        <p className="text-sm text-muted-foreground">Want to negotiate? We can draft a letter.</p>
+                        <p className="text-sm text-muted-foreground flex-1">
+                            Want to negotiate? We can draft a formal letter powered by AI and Foxit PDF.
+                        </p>
                         <button
                             onClick={handleGenerateLetter}
                             disabled={isGeneratingLetter}
@@ -203,7 +249,7 @@ export default function RentCalculator() {
                                 <CheckCircle2 className="w-4 h-4" /> Letter Generated
                             </span>
                             <a
-                                href={`data:application/pdf;base64,${letterPdf}`}
+                                href={letterPdf}
                                 download="Rent_Negotiation_Letter.pdf"
                                 className="text-sm font-bold text-emerald-400 hover:text-emerald-300 underline underline-offset-4 flex items-center gap-1"
                             >
