@@ -28,24 +28,28 @@ export default async function AnalysisPage({ params }: Props) {
     const { extractedClauses, overallRiskScore, propertyAddress, summary } = analysis;
 
     return (
-        <div className="min-h-screen bg-background p-6">
-            <div className="max-w-4xl mx-auto space-y-8">
+        <div className="min-h-screen bg-background p-6 lg:p-10 relative overflow-hidden">
+            {/* Ambient Background Glows */}
+            <div className="absolute top-0 left-[10%] w-[30%] h-[30%] bg-primary/10 blur-[140px] rounded-full pointer-events-none animate-float" />
+            <div className="absolute top-[40%] right-[-5%] w-[40%] h-[40%] bg-indigo-500/10 blur-[150px] rounded-full pointer-events-none animate-float" style={{ animationDelay: "2s" }} />
+
+            <div className="max-w-5xl mx-auto space-y-10 relative z-10 animate-fade-in-up">
 
                 {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Lease Analysis Report</h1>
-                        <p className="text-muted-foreground mt-1">
+                        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Lease <span className="text-gradient-primary">Analysis Report</span></h1>
+                        <p className="text-muted-foreground mt-2 font-medium text-lg">
                             {propertyAddress || "Unknown Property"}
                         </p>
                     </div>
-                    <div className="flex gap-4">
-                        <Link href="/upload" className="text-primary hover:underline text-sm">
+                    <div className="flex flex-wrap items-center gap-4">
+                        <Link href="/upload" className="text-sm font-semibold text-muted-foreground hover:text-foreground hover:underline transition-colors shrink-0">
                             Analyze another lease
                         </Link>
                         <Link
                             href={`/chat?lease=${id}`}
-                            className="flex items-center gap-1 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                            className="flex items-center gap-2 bg-gradient-to-r from-primary to-indigo-600 text-white hover:shadow-lg hover:shadow-primary/30 px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-105 active:scale-95 shrink-0"
                         >
                             <Mic className="w-4 h-4" />
                             Ask Your Lease
@@ -55,87 +59,101 @@ export default async function AnalysisPage({ params }: Props) {
                 </div>
 
                 {/* Score Card */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <div className="bg-card rounded-xl border p-6 shadow-sm">
-                        <h3 className="text-sm font-medium text-muted-foreground">Overall Risk Score</h3>
-                        <div className="mt-2 flex items-baseline gap-2">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="glass-card rounded-3xl p-8 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none group-hover:opacity-100 transition-opacity opacity-50" />
+                        <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Overall Risk Score</h3>
+                        <div className="mt-4 flex items-baseline gap-2">
                             <span className={cn(
-                                "text-4xl font-bold",
-                                overallRiskScore > 70 ? "text-destructive" : overallRiskScore > 30 ? "text-yellow-500" : "text-green-500"
+                                "text-6xl font-black drop-shadow-md",
+                                overallRiskScore > 70 ? "text-red-500" : overallRiskScore > 30 ? "text-amber-500" : "text-emerald-500"
                             )}>
                                 {overallRiskScore}
                             </span>
-                            <span className="text-sm text-muted-foreground">/ 100</span>
+                            <span className="text-lg text-muted-foreground font-semibold">/ 100</span>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-2">
+                        <p className="text-sm text-foreground/70 mt-4 leading-relaxed font-medium">
                             Higher score indicates more aggressive or risky clauses.
                         </p>
                     </div>
 
                     {/* Summary Card */}
                     {summary && (
-                        <div className="bg-card rounded-xl border p-6 shadow-sm md:col-span-2">
-                            <h3 className="text-sm font-medium text-muted-foreground mb-2">AI Summary</h3>
-                            <p className="text-sm text-foreground/80">{summary}</p>
+                        <div className="glass-card rounded-3xl p-8 md:col-span-2 relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none group-hover:opacity-100 transition-opacity opacity-50" />
+                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-4">AI Summary</h3>
+                            <p className="text-[15px] leading-relaxed text-foreground/90">{summary}</p>
                         </div>
                     )}
                 </div>
 
                 {/* Clauses List */}
-                <div className="space-y-4">
-                    <h2 className="text-xl font-semibold">Flagged Clauses</h2>
-                    <div className="grid gap-4">
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-bold tracking-tight">Flagged Clauses</h2>
+                    <div className="grid gap-6">
                         {extractedClauses?.map((clause: any, idx: number) => (
                             <div
                                 key={idx}
                                 className={cn(
-                                    "bg-card border rounded-lg p-6 shadow-sm transition-all hover:shadow-md",
-                                    clause.riskLevel === "red" ? "border-l-4 border-l-destructive" :
-                                        clause.riskLevel === "yellow" ? "border-l-4 border-l-yellow-500" :
-                                            "border-l-4 border-l-green-500"
+                                    "glass-card rounded-2xl p-6 md:p-8 transition-all hover:scale-[1.01] hover:shadow-xl relative overflow-hidden group border-none",
+                                    clause.riskLevel === "red" ? "ring-1 ring-red-500/30" :
+                                        clause.riskLevel === "yellow" ? "ring-1 ring-amber-500/30" :
+                                            "ring-1 ring-emerald-500/30"
                                 )}
                             >
-                                <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-2">
+                                {/* Left-side colored indicator bar */}
+                                <div className={cn(
+                                    "absolute left-0 top-0 bottom-0 w-1.5",
+                                    clause.riskLevel === "red" ? "bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]" :
+                                        clause.riskLevel === "yellow" ? "bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)]" :
+                                            "bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]"
+                                )} />
+
+                                <div className="flex flex-col md:flex-row items-start justify-between gap-6 pl-2">
+                                    <div className="flex-1 space-y-5 w-full">
+                                        <div className="flex flex-wrap items-center gap-3">
                                             <span className={cn(
-                                                "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                                                clause.riskLevel === "red" ? "bg-destructive/10 text-destructive" :
-                                                    clause.riskLevel === "yellow" ? "bg-yellow-100 text-yellow-800" :
-                                                        "bg-green-100 text-green-800"
+                                                "inline-flex items-center rounded-lg px-3 py-1 text-[11px] font-black uppercase tracking-widest",
+                                                clause.riskLevel === "red" ? "bg-red-500/20 text-red-400" :
+                                                    clause.riskLevel === "yellow" ? "bg-amber-500/20 text-amber-500" :
+                                                        "bg-emerald-500/20 text-emerald-400"
                                             )}>
-                                                {clause.riskLevel.toUpperCase()}
+                                                {clause.riskLevel}
                                             </span>
-                                            <h3 className="font-semibold text-lg capitalize">{clause.clauseType.replace('_', ' ')}</h3>
+                                            <h3 className="font-bold text-xl capitalize text-foreground">{clause.clauseType.replace('_', ' ')}</h3>
                                         </div>
 
-                                        <p className="text-muted-foreground text-sm italic mb-4 bg-muted/50 p-3 rounded-md border">
-                                            &quot;{clause.originalText}&quot;
-                                        </p>
+                                        <div className="relative">
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-white/10 rounded-full" />
+                                            <p className="text-muted-foreground text-[15px] italic leading-relaxed pl-4 pr-4 py-1">
+                                                &quot;{clause.originalText}&quot;
+                                            </p>
+                                        </div>
 
-                                        <div className="space-y-2">
-                                            <div className="flex gap-2 text-sm">
-                                                <Info className="h-4 w-4 text-primary mt-0.5" />
-                                                <span className="text-foreground/90">{clause.explanation}</span>
+                                        <div className="space-y-3 bg-background/40 p-5 rounded-xl border border-white/5">
+                                            <div className="flex items-start gap-3 text-[15px]">
+                                                <Info className="h-5 w-5 shrink-0 text-primary mt-0.5" />
+                                                <span className="text-foreground/90 leading-relaxed font-medium">{clause.explanation}</span>
                                             </div>
 
                                             {clause.citation && (
-                                                <div className="flex gap-2 text-sm">
-                                                    <span className="font-medium min-w-16 text-muted-foreground">Legal Ref:</span>
-                                                    <span className="text-primary">{clause.citation}</span>
+                                                <div className="flex items-start gap-3 text-[15px] pt-2">
+                                                    <span className="font-bold min-w-20 text-muted-foreground uppercase tracking-wider text-xs mt-1">Legal Ref:</span>
+                                                    <span className="text-primary font-semibold">{clause.citation}</span>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
 
                                     {clause.riskLevel === 'red' && (
-                                        <div className="hidden md:block">
+                                        <div className="hidden md:block shrink-0">
                                             <CounterLetterButton clause={clause} />
                                         </div>
                                     )}
                                 </div>
+
                                 {clause.riskLevel === 'red' && (
-                                    <div className="mt-4 md:hidden">
+                                    <div className="mt-6 md:hidden">
                                         <CounterLetterButton clause={clause} variant="full" />
                                     </div>
                                 )}

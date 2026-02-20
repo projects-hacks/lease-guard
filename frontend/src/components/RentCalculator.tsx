@@ -1,261 +1,216 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, DollarSign, MapPin, Bed, CheckCircle, AlertTriangle, XCircle, FileDown, ExternalLink } from "lucide-react";
+import { DollarSign, MapPin, Search, Mail, Loader2, ArrowRight, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const STATES = [
-    "CA", "NY", "TX", "FL", "IL", "WA", "MA", "CO", "NJ", "OR"
-];
+interface RentAnalysis {
+    is_rent_control_likely: boolean;
+    average_market_rent: string;
+    market_summary: string;
+    recommendation: string;
+}
 
 export default function RentCalculator() {
-    const [zip, setZip] = useState("");
-    const [state, setState] = useState("CA");
-    const [bedrooms, setBedrooms] = useState(1);
-    const [price, setPrice] = useState("");
-    const [result, setResult] = useState<any>(null);
-    const [loading, setLoading] = useState(false);
-    const [generatingLetter, setGeneratingLetter] = useState(false);
+    const [city, setCity] = useState("");
+    const [currentRent, setCurrentRent] = useState("");
+    const [bedrooms, setBedrooms] = useState("1");
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [analysis, setAnalysis] = useState<RentAnalysis | null>(null);
+    const [isGeneratingLetter, setIsGeneratingLetter] = useState(false);
+    const [letterPdf, setLetterPdf] = useState<string | null>(null);
 
     const handleAnalyze = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-        setResult(null);
+        if (!city || !currentRent) return;
+        setIsAnalyzing(true);
+        setAnalysis(null);
+        setLetterPdf(null);
 
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/rent/analyze", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    zipCode: zip,
-                    state: state,
-                    bedrooms: Number(bedrooms),
-                    price: Number(price)
+                    city,
+                    current_rent: parseFloat(currentRent),
+                    bedrooms: parseInt(bedrooms)
                 })
             });
 
-            if (!res.ok) throw new Error("Analysis failed");
+            if (!res.ok) throw new Error("Failed to analyze");
             const data = await res.json();
-            setResult(data);
-        } catch (err) {
-            console.error(err);
-            alert("Failed to analyze. Please check inputs.");
+            setAnalysis(data);
+        } catch (error) {
+            console.error(error);
+            alert("Could not pull market data. Please try again.");
         } finally {
-            setLoading(false);
+            setIsAnalyzing(false);
         }
     };
 
     const handleGenerateLetter = async () => {
-        if (!result) return;
-        setGeneratingLetter(true);
+        if (!analysis || !city) return;
+        setIsGeneratingLetter(true);
 
         try {
             const tenantName = prompt("Enter your name:", "John Doe") || "John Doe";
             const landlordName = prompt("Enter landlord name:", "Landlord Inc.") || "Landlord Inc.";
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/generate/negotiation-letter", {
+            const res = await fetch(`${ process.env.NEXT_PUBLIC_API_URL } / generate / negotiation - letter`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    tenantName,
-                    landlordName,
-                    currentRent: Number(price),
-                    marketAverage: result.market_stats.average,
-                    state: state
+                    tenant_name: tenantName,
+                    landlord_name: landlordName,
+                    property_address: city,
+                    current_rent: currentRent,
+                    market_average_rent: analysis.average_market_rent
                 })
             });
 
             if (!res.ok) throw new Error("Failed to generate letter");
-
-            const blob = await res.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "rent_negotiation_letter.pdf";
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        } catch (err) {
-            console.error(err);
+            const data = await res.json();
+            setLetterPdf(data.pdf);
+        } catch (error) {
+            console.error(error);
             alert("Failed to generate letter.");
         } finally {
-            setGeneratingLetter(false);
+            setIsGeneratingLetter(false);
         }
     };
 
     return (
-        <div className="w-full max-w-lg mx-auto bg-card border rounded-xl shadow-sm p-6">
-            <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
-                <DollarSign className="w-6 h-6 text-primary" />
-                Rent Radar
-            </h2>
-
-            <form onSubmit={handleAnalyze} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-sm font-medium">Zip Code</label>
-                        <div className="relative mt-1">
-                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <input
-                                type="text"
-                                required
-                                className="flex h-10 w-full rounded-md border border-input bg-background py-2 pr-3 pl-10 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                placeholder="90210"
-                                value={zip}
-                                onChange={(e) => setZip(e.target.value)}
-                            />
-                        </div>
+        <div className="w-full max-w-2xl mx-auto space-y-6 animate-fade-in-up">
+            {/* Input Form */}
+            <div className="glass-card rounded-2xl p-6 sm:p-8 space-y-6">
+                <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                    <div className="p-2.5 bg-emerald-500/10 rounded-xl ring-1 ring-emerald-500/20">
+                        <DollarSign className="w-6 h-6 text-emerald-400" />
                     </div>
                     <div>
-                        <label className="text-sm font-medium">State</label>
-                        <select
-                            className="flex h-10 w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            value={state}
-                            onChange={(e) => setState(e.target.value)}
-                        >
-                            {STATES.map(s => (
-                                <option key={s} value={s}>{s}</option>
-                            ))}
-                        </select>
+                        <h2 className="text-2xl font-bold tracking-tight">Market Analysis</h2>
+                        <p className="text-sm text-muted-foreground">Compare your rent with real-time web data.</p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-sm font-medium">Bedrooms</label>
-                        <div className="relative mt-1">
-                            <Bed className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <form onSubmit={handleAnalyze} className="space-y-6">
+                    <div className="grid gap-5 sm:grid-cols-3">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-foreground/90">City / Neighborhood</label>
+                            <div className="relative">
+                                <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                <input
+                                    type="text"
+                                    placeholder="e.g. San Francisco, CA"
+                                    value={city}
+                                    onChange={(e) => setCity(e.target.value)}
+                                    className="w-full pl-9 h-11 bg-background/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-foreground/90">Your Rent /mo</label>
+                            <div className="relative">
+                                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                <input
+                                    type="number"
+                                    placeholder="2500"
+                                    value={currentRent}
+                                    onChange={(e) => setCurrentRent(e.target.value)}
+                                    className="w-full pl-9 h-11 bg-background/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-foreground/90">Bedrooms</label>
                             <select
-                                className="flex h-10 w-full appearance-none rounded-md border border-input bg-background py-2 pr-8 pl-10 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 value={bedrooms}
-                                onChange={(e) => setBedrooms(Number(e.target.value))}
+                                onChange={(e) => setBedrooms(e.target.value)}
+                                className="w-full h-11 px-3 bg-background/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none appearance-none"
                             >
-                                {[0, 1, 2, 3, 4, 5].map(n => (
-                                    <option key={n} value={n}>{n === 0 ? "Studio" : `${n} BR`}</option>
-                                ))}
+                                <option value="0">Studio</option>
+                                <option value="1">1 Bed</option>
+                                <option value="2">2 Beds</option>
+                                <option value="3">3+ Beds</option>
                             </select>
                         </div>
                     </div>
-                    <div>
-                        <label className="text-sm font-medium">Monthly Rent ($)</label>
-                        <div className="relative mt-1">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                            <input
-                                type="number"
-                                required
-                                className="flex h-10 w-full rounded-md border border-input bg-background py-2 pr-3 pl-8 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                placeholder="2000"
-                                value={price}
-                                onChange={(e) => setPrice(e.target.value)}
-                            />
+
+                    <button
+                        type="submit"
+                        disabled={isAnalyzing || !city || !currentRent}
+                        className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 hover:scale-[1.02] active:scale-95 shadow-lg shadow-primary/20"
+                    >
+                        {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
+                        {isAnalyzing ? "Searching Live Markets..." : "Analyze Market"}
+                    </button>
+                </form>
+            </div>
+
+            {/* Analysis Results */}
+            {analysis && (
+                <div className="glass-card rounded-2xl p-6 sm:p-8 space-y-6 animate-fade-in-up">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                        <div className="p-5 rounded-xl bg-background/40 border border-white/5 space-y-1">
+                            <p className="text-sm font-medium text-muted-foreground">Market Average</p>
+                            <p className="text-3xl font-bold text-foreground">{analysis.average_market_rent}</p>
                         </div>
-                    </div>
-                </div>
-
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 rounded-md font-medium transition-colors flex items-center justify-center gap-2"
-                >
-                    {loading ? <Loader2 className="animate-spin w-4 h-4" /> : "Check Deal"}
-                </button>
-            </form>
-
-            {result && (
-                <div className="mt-8 border-t pt-6 space-y-4">
-                    {/* Rating Banner */}
-                    <div className={cn(
-                        "p-4 rounded-lg flex items-start gap-4",
-                        result.analysis.color === "green" ? "bg-green-100 text-green-800" :
-                            result.analysis.color === "red" ? "bg-red-100 text-red-800" :
-                                "bg-yellow-100 text-yellow-800"
-                    )}>
-                        {result.analysis.color === "green" ? <CheckCircle className="w-6 h-6 shrink-0" /> :
-                            result.analysis.color === "red" ? <XCircle className="w-6 h-6 shrink-0" /> :
-                                <AlertTriangle className="w-6 h-6 shrink-0" />}
-
-                        <div>
-                            <h3 className="font-bold text-lg">{result.analysis.rating}</h3>
-                            <p className="text-sm mt-1">
-                                Avg (est): <b>${result.market_stats.average?.toLocaleString()}</b> <br />
-                                Range: ${result.market_stats.min?.toLocaleString()} - ${result.market_stats.max?.toLocaleString()}
+                        <div className={cn(
+                            "p-5 rounded-xl border space-y-1",
+                            analysis.is_rent_control_likely
+                                ? "bg-amber-500/10 border-amber-500/20"
+                                : "bg-background/40 border-white/5"
+                        )}>
+                            <p className="text-sm font-medium text-muted-foreground">Rent Control Status</p>
+                            <p className={cn(
+                                "text-lg font-bold",
+                                analysis.is_rent_control_likely ? "text-amber-500" : "text-foreground"
+                            )}>
+                                {analysis.is_rent_control_likely ? "Likely Protected" : "Standard Rules Apply"}
                             </p>
                         </div>
                     </div>
 
-                    {/* Difference */}
-                    <div className="text-center text-sm text-muted-foreground">
-                        {result.analysis.difference > 0
-                            ? `You are paying $${result.analysis.difference.toFixed(0)} above average.`
-                            : `You are saving $${Math.abs(result.analysis.difference).toFixed(0)} vs average!`}
+                    <div className="space-y-4">
+                        <div>
+                            <h3 className="text-lg font-semibold border-b border-white/5 pb-2 mb-3">Market Intel (You.com)</h3>
+                            <p className="text-sm text-foreground/80 leading-relaxed bg-background/30 p-4 rounded-xl border border-white/5">{analysis.market_summary}</p>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold border-b border-white/5 pb-2 mb-3">AI Recommendation</h3>
+                            <p className="text-sm font-medium text-primary leading-relaxed">{analysis.recommendation}</p>
+                        </div>
                     </div>
 
-                    {/* Market Summary */}
-                    {result.market_stats.market_summary && (
-                        <div className="bg-muted/50 p-3 rounded-md text-sm text-muted-foreground">
-                            {result.market_stats.market_summary}
-                        </div>
-                    )}
-
-                    {/* Comparables */}
-                    {result.market_stats.comparables?.length > 0 && (
-                        <div>
-                            <h4 className="text-sm font-medium mb-2">Comparable Listings</h4>
-                            <div className="space-y-2">
-                                {result.market_stats.comparables.slice(0, 5).map((comp: any, i: number) => (
-                                    <div key={i} className="flex justify-between items-center text-sm bg-muted/30 px-3 py-2 rounded-md">
-                                        <span className="text-muted-foreground">{comp.address || comp.source}</span>
-                                        <span className="font-medium">${comp.rent?.toLocaleString()}/mo</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Rent Control Info */}
-                    {result.analysis.rent_control_applies && (
-                        <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-sm">
-                            <strong>🏛 Rent Control Applies.</strong>
-                            {result.analysis.max_legal_increase && (
-                                <span> Max legal increase: {result.analysis.max_legal_increase}</span>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Sources Attribution */}
-                    {result.rent_laws?.sources?.length > 0 && (
-                        <div className="space-y-1">
-                            <h4 className="text-xs font-medium text-muted-foreground">Sources</h4>
-                            {result.rent_laws.sources.slice(0, 3).map((src: any, i: number) => (
-                                <a key={i} href={src.url} target="_blank" rel="noopener noreferrer"
-                                    className="text-xs text-primary hover:underline flex items-center gap-1">
-                                    <ExternalLink className="w-3 h-3" />
-                                    {src.title || src.url}
-                                </a>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Negotiation Letter Button — only for overpaying */}
-                    {result.analysis.color === "red" && (
+                    {/* Generate Letter Button */}
+                    <div className="pt-4 border-t border-white/5 flex flex-col sm:flex-row gap-4 justify-between items-center">
+                        <p className="text-sm text-muted-foreground">Want to negotiate? We can draft a letter.</p>
                         <button
                             onClick={handleGenerateLetter}
-                            disabled={generatingLetter}
-                            className="w-full flex items-center justify-center gap-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 rounded-md text-sm font-medium transition-colors"
+                            disabled={isGeneratingLetter}
+                            className="w-full sm:w-auto px-6 h-11 bg-white text-black hover:bg-gray-200 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 hover:scale-[1.02] active:scale-95"
                         >
-                            {generatingLetter ? (
-                                <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
-                            ) : (
-                                <><FileDown className="w-4 h-4" /> Generate Negotiation Letter (PDF)</>
-                            )}
+                            {isGeneratingLetter ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mail className="w-5 h-5" />}
+                            {isGeneratingLetter ? "Drafting..." : "Draft Negotiation Letter"}
                         </button>
-                    )}
+                    </div>
 
-                    {/* Data Source Attribution */}
-                    <p className="text-center text-xs text-muted-foreground pt-2">
-                        Market data powered by <span className="font-medium">You.com Search API</span>
-                    </p>
+                    {/* Download PDF Link */}
+                    {letterPdf && (
+                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between animate-fade-in-up">
+                            <span className="text-sm font-medium text-emerald-500 flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4" /> Letter Generated
+                            </span>
+                            <a
+                                href={`data: application / pdf; base64, ${ letterPdf } `}
+                                download="Rent_Negotiation_Letter.pdf"
+                                className="text-sm font-bold text-emerald-400 hover:text-emerald-300 underline underline-offset-4 flex items-center gap-1"
+                            >
+                                Download PDF <ArrowRight className="w-4 h-4" />
+                            </a>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

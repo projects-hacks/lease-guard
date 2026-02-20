@@ -119,30 +119,30 @@ export default function VoiceChat({ leaseId }: Props) {
     };
 
     return (
-        <div className="flex flex-col h-[600px] w-full max-w-md mx-auto bg-card border rounded-xl shadow-lg overflow-hidden">
+        <div className="flex flex-col h-[600px] w-full max-w-md mx-auto glass-card rounded-3xl overflow-hidden animate-fade-in-up">
             {/* Lease Context Indicator */}
             {leaseId && (
-                <div className="px-4 py-2 bg-primary/10 border-b flex items-center gap-2 text-xs text-primary font-medium">
-                    <Link2 className="w-3 h-3" />
+                <div className="px-5 py-3 bg-primary/20 border-b border-primary/30 flex items-center gap-3 text-sm text-primary font-bold shadow-inner">
+                    <Link2 className="w-4 h-4" />
                     Lease loaded — answers are based on YOUR lease clauses
                 </div>
             )}
 
             {/* No Lease Hint */}
             {!leaseId && !hintDismissed && (
-                <div className="px-4 py-2.5 bg-amber-500/10 border-b flex items-center justify-between gap-2 text-xs">
-                    <div className="flex items-center gap-2 text-amber-700">
-                        <Info className="w-3.5 h-3.5 shrink-0" />
+                <div className="px-5 py-3 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between gap-3 text-sm shadow-inner">
+                    <div className="flex items-center gap-2 text-amber-500">
+                        <Info className="w-4 h-4 shrink-0" />
                         <span>
                             For personalized answers,{" "}
-                            <Link href="/upload" className="font-semibold underline underline-offset-2 hover:text-amber-900">
+                            <Link href="/upload" className="font-bold underline underline-offset-4 hover:text-amber-400">
                                 upload your lease first
                             </Link>
                         </span>
                     </div>
                     <button
                         onClick={() => setHintDismissed(true)}
-                        className="text-amber-600 hover:text-amber-800 font-medium shrink-0"
+                        className="text-amber-600 hover:text-amber-400 font-bold shrink-0 p-1 rounded-full hover:bg-amber-500/10 transition-colors"
                     >
                         ✕
                     </button>
@@ -150,30 +150,32 @@ export default function VoiceChat({ leaseId }: Props) {
             )}
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-5 space-y-5">
                 {messages.map((m, idx) => (
                     <div key={idx} className={cn("flex w-full", m.role === "user" ? "justify-end" : "justify-start")}>
                         <div className={cn(
-                            "max-w-[80%] rounded-2xl px-4 py-2 text-sm",
-                            m.role === "user" ? "bg-primary text-primary-foreground rounded-br-none" : "bg-muted text-foreground rounded-bl-none"
+                            "max-w-[85%] rounded-2xl px-5 py-3 text-[15px] shadow-sm leading-relaxed",
+                            m.role === "user"
+                                ? "bg-primary text-primary-foreground rounded-br-sm font-medium"
+                                : "bg-white/10 border border-white/5 text-foreground rounded-bl-sm"
                         )}>
                             <p>{m.content}</p>
                             {m.audioUrl && (
                                 <button
                                     onClick={() => new Audio(m.audioUrl!).play()}
-                                    className="mt-2 text-xs flex items-center gap-1 opacity-70 hover:opacity-100"
+                                    className="mt-3 text-xs flex items-center gap-1.5 opacity-80 hover:opacity-100 font-bold bg-black/20 px-3 py-1.5 rounded-full w-fit transition-colors"
                                 >
-                                    <Play className="w-3 h-3" /> Replay Voice
+                                    <Play className="w-3.5 h-3.5" /> Replay Voice
                                 </button>
                             )}
                         </div>
                     </div>
                 ))}
                 {isProcessing && (
-                    <div className="flex justify-start w-full">
-                        <div className="bg-muted rounded-2xl rounded-bl-none px-4 py-2 flex items-center gap-2">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span className="text-xs text-muted-foreground">Thinking...</span>
+                    <div className="flex justify-start w-full animate-fade-in-up block">
+                        <div className="bg-white/10 border border-white/5 rounded-2xl rounded-bl-sm px-5 py-3 flex items-center gap-3">
+                            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                            <span className="text-sm font-medium text-muted-foreground">Analyzing request...</span>
                         </div>
                     </div>
                 )}
@@ -181,29 +183,36 @@ export default function VoiceChat({ leaseId }: Props) {
             </div>
 
             {/* Controls */}
-            <div className="p-4 border-t bg-background/50 backdrop-blur-sm">
-                <div className="flex justify-center">
+            <div className="p-6 border-t border-white/5 bg-background/50 backdrop-blur-md">
+                <div className="flex justify-center relative">
+                    {/* Ripple Effect when recording */}
+                    {isRecording && (
+                        <div className="absolute inset-0 m-auto w-20 h-20 bg-red-500/30 rounded-full animate-ping pointer-events-none" />
+                    )}
+
                     <button
                         onMouseDown={startRecording}
                         onMouseUp={stopRecording}
                         onTouchStart={startRecording}
                         onTouchEnd={stopRecording}
                         className={cn(
-                            "w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-md",
-                            isRecording ? "bg-red-500 scale-110 ring-4 ring-red-500/30" : "bg-primary hover:bg-primary/90",
-                            isProcessing ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                            "relative z-10 w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl border border-white/10",
+                            isRecording
+                                ? "bg-red-500 scale-110 shadow-red-500/40 border-red-400"
+                                : "bg-gradient-to-br from-primary to-indigo-600 hover:opacity-90 hover:scale-105 shadow-primary/30",
+                            isProcessing ? "opacity-50 cursor-not-allowed scale-100" : "cursor-pointer"
                         )}
                         disabled={isProcessing}
                     >
                         {isRecording ? (
-                            <Square className="w-6 h-6 text-white fill-current" />
+                            <Square className="w-6 h-6 text-white fill-current animate-pulse" />
                         ) : (
-                            <Mic className="w-8 h-8 text-white" />
+                            <Mic className="w-7 h-7 text-white" />
                         )}
                     </button>
                 </div>
-                <p className="text-center text-xs text-muted-foreground mt-4">
-                    {isRecording ? "Release to Send" : "Hold to Speak"}
+                <p className="text-center text-xs text-muted-foreground font-semibold uppercase tracking-wider mt-5">
+                    {isProcessing ? "Processing" : (isRecording ? "Release to Send" : "Hold to Speak")}
                 </p>
             </div>
         </div>
