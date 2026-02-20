@@ -2,8 +2,6 @@
 
 **LeaseGuard** is an AI-powered platform designed to protect tenants from unfair leases, stolen deposits, and overpriced rent. Built for the DeveloperWeek 2026 Hackathon using cutting-edge technologies.
 
-![LeaseGuard Banner](https://via.placeholder.com/1200x400?text=LeaseGuard+AI+Tenant+Protection)
-
 ## 🚀 Features
 
 ### 1. Legal Shield (Lease Analysis)
