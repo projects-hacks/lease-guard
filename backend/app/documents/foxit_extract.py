@@ -76,10 +76,6 @@ class FoxitClient:
         """
         Starts the text extraction process and returns a task ID.
         """
-    def start_extraction(self, document_id: str) -> str:
-        """
-        Starts the text extraction process and returns a task ID.
-        """
         # Confirmed endpoint from documentation
         url = f"{self.base_url}/pdf-services/api/documents/convert/pdf-to-text"
         

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel
 from app.documents.foxit_docgen import FoxitDocGenClient
-import requests
-import urllib.parse
+from app.sanity_client.client import SanityClient
+from app.law_engine.youcom_legal import YouComLegalSearch
 
 router = APIRouter()
 
@@ -12,8 +12,36 @@ class CounterLetterRequest(BaseModel):
     clause: dict
     state: str
 
+class NegotiationLetterRequest(BaseModel):
+    tenantName: str
+    landlordName: str
+    currentRent: float
+    marketAverage: float
+    state: str
+
 @router.post("/generate/counter-letter")
 async def generate_counter_letter(request: CounterLetterRequest):
+    """
+    Generates a counter-letter PDF for a specific clause.
+    Uses You.com to verify legal citations before generating.
+    """
+    # 1. Verify legal reference with You.com
+    legal_search = YouComLegalSearch()
+    try:
+        verification = legal_search.verify_red_flag(
+            request.state,
+            request.clause.get("clauseType", ""),
+            request.clause.get("originalText", "")
+        )
+        # Enhance clause with real legal sources
+        if verification.get("sources"):
+            request.clause["verified_sources"] = verification["sources"]
+        if verification.get("legal_analysis"):
+            request.clause["legal_analysis"] = verification["legal_analysis"]
+    except Exception as e:
+        print(f"You.com verification skipped: {e}")
+
+    # 2. Generate PDF
     client = FoxitDocGenClient()
     try:
         pdf_bytes = client.create_counter_letter(
@@ -33,35 +61,20 @@ async def generate_counter_letter(request: CounterLetterRequest):
 
 @router.get("/generate/report/{report_id}")
 async def generate_condition_report_pdf(report_id: str):
-    from app.sanity_client.client import SanityClient
+    """
+    Fetches condition report data from Sanity and generates a PDF.
+    """
     sanity = SanityClient()
     
-    # 1. Fetch Report Data
-    query = f'*[_type == "conditionReport" && _id == "{report_id}"][0]{{..., defects[]{{..., screenshot{{asset->{{url}}}}}}}}'
     try:
-        # We need to implement a generic fetch in SanityClient or use raw requests
-        # Using the SanityClient instance to fetch (assuming we add a fetch method or use internal)
-        # For speed, let's just use requests here or add method to SanityClient
-        # Actually SanityClient doesn't have a fetch method exposed yet.
-        # Let's add a quick fetch helper here or use the one in client.py if exists.
-        # client.py only has save_analysis. Let's hack a quick fetch here or better, add to SanityClient.
-        
-        # Quick fetch
-        encoded_query = urllib.parse.quote(query)
-        url = f"https://{sanity.project_id}.api.sanity.io/v2024-02-18/data/query/{sanity.dataset}?query={encoded_query}"
-        headers = {"Authorization": f"Bearer {sanity.token}"}
-        
-        res = requests.get(url, headers=headers)
-        res.raise_for_status()
-        data = res.json().get("result")
-        
+        data = sanity.get_condition_report(report_id)
         if not data:
             raise HTTPException(status_code=404, detail="Report not found")
-            
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Sanity fetch failed: {e}")
 
-    # 2. Generate PDF
     client = FoxitDocGenClient()
     try:
         pdf_bytes = client.create_condition_report(data)
@@ -73,3 +86,38 @@ async def generate_condition_report_pdf(report_id: str):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PDF Generation failed: {e}")
+
+@router.post("/generate/negotiation-letter")
+async def generate_negotiation_letter(request: NegotiationLetterRequest):
+    """
+    Generates a rent negotiation letter PDF based on market data analysis.
+    """
+    # Get rent laws for the area
+    legal_search = YouComLegalSearch()
+    try:
+        rent_laws = legal_search.search_statute(request.state, "rent_increase", "")
+        legal_context = rent_laws.get("explanation", "")
+        citation = rent_laws.get("citation", "")
+    except Exception:
+        legal_context = ""
+        citation = ""
+
+    client = FoxitDocGenClient()
+    try:
+        pdf_bytes = client.create_negotiation_letter(
+            request.tenantName,
+            request.landlordName,
+            request.currentRent,
+            request.marketAverage,
+            request.state,
+            legal_context,
+            citation
+        )
+        
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=negotiation_letter.pdf"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
