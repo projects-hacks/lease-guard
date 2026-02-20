@@ -100,8 +100,7 @@ export default function VoiceChat({ leaseId }: Props) {
         if (leaseId) formData.append("lease_id", leaseId);
 
         try {
-            const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
-            const res = await fetch(`${apiBase}/chat/voice?lease_id=${leaseId || ""}`, {
+            const res = await fetch(`/api/v1/chat/voice?lease_id=${leaseId || ""}`, {
                 method: "POST",
                 body: formData,
             });
