@@ -50,11 +50,11 @@ export default function RentCalculator() {
                 <div>
                     <label className="text-sm font-medium">Zip Code</label>
                     <div className="relative mt-1">
-                        <MapPin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input
                             type="text"
                             required
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex h-10 w-full rounded-md border border-input bg-background py-2 pr-3 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             placeholder="90210"
                             value={zip}
                             onChange={(e) => setZip(e.target.value)}
@@ -66,9 +66,9 @@ export default function RentCalculator() {
                     <div>
                         <label className="text-sm font-medium">Bedrooms</label>
                         <div className="relative mt-1">
-                            <Bed className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                            <Bed className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                             <select
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                className="flex h-10 w-full appearance-none rounded-md border border-input bg-background py-2 pr-8 pl-10 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 value={bedrooms}
                                 onChange={(e) => setBedrooms(Number(e.target.value))}
                             >
@@ -76,16 +76,19 @@ export default function RentCalculator() {
                                     <option key={n} value={n}>{n === 0 ? "Studio" : `${n} BR`}</option>
                                 ))}
                             </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                            </div>
                         </div>
                     </div>
                     <div>
                         <label className="text-sm font-medium">Monthly Rent ($)</label>
                         <div className="relative mt-1">
-                            <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                             <input
                                 type="number"
                                 required
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-7 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                className="flex h-10 w-full rounded-md border border-input bg-background py-2 pr-3 pl-8 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 placeholder="2000"
                                 value={price}
                                 onChange={(e) => setPrice(e.target.value)}
