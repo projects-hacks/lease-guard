@@ -50,7 +50,7 @@ class DeepgramService:
             payload = {"buffer": audio_bytes}
             
             options = {
-                "model": "nova-3",
+                "model": "nova-2",
                 "smart_format": True,
                 "mimetype": mimetype,
                 "punctuate": True,

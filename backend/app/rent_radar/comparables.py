@@ -31,7 +31,7 @@ class RentRadar:
         # Query 1: Search for comparable listings
         listings_query = (
             f"apartments for rent {bedrooms} bedroom in {location_str} "
-            f"current listings with prices site:zillow.com OR site:apartments.com OR site:rent.com"
+            f"current available listings with accurate pricing data"
         )
 
         # Query 2: Average rent data for the area
