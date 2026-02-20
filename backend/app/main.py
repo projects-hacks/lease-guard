@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routes import upload, documents, deposit, chat, rent
+from app.routes import upload, documents, deposit, chat, rent, maintenance
 
 app = FastAPI(
     title="LeaseGuard API",
@@ -23,6 +23,7 @@ app.include_router(documents.router, prefix="/api/v1", tags=["Document Generatio
 app.include_router(deposit.router, prefix="/api/v1", tags=["Deposit Defender"])
 app.include_router(chat.router, prefix="/api/v1", tags=["Voice Chat"])
 app.include_router(rent.router, prefix="/api/v1", tags=["Rent Radar"])
+app.include_router(maintenance.router, prefix="/api/v1", tags=["Maintenance & TTS"])
 
 @app.get("/")
 async def root():
