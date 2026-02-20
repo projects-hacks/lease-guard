@@ -224,23 +224,3 @@ docker-compose up --build
 export KUBECONFIG=lke-kubeconfig.yaml
 kubectl apply -f k8s/
 ```
-
----
-
-## Hackathon Track Eligibility
-
-This project was built for the **DeveloperWeek 2026 Hackathon** and qualifies for multiple sponsor challenges:
-
-| Track | Eligibility |
-|-------|-------------|
-| **Foxit Software** | Uses both Foxit PDF Services (text extraction) AND Document Generation (4 distinct PDF types) |
-| **You.com** | Uses You.com Smart API for live rent market research with citation-backed results |
-| **Akamai / Linode** | Backend runs on Linode Kubernetes Engine with Docker + GitHub Actions CI/CD |
-| **Deepgram** | Uses Nova-3 STT, Nova-2 Audio Intelligence, and Aura-2 TTS across 3 features |
-| **Sanity** | Uses Sanity.io as structured content backend — lease analyses are queryable by clause type, risk level, and state |
-
----
-
-## License
-
-MIT License.
