@@ -15,7 +15,19 @@ export default function MaintenancePage() {
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
 
-    const startRecording = async () => {
+    const toggleRecording = async () => {
+        if (isProcessing) return;
+
+        if (isRecording) {
+            // Tap again to stop
+            if (mediaRecorderRef.current) {
+                mediaRecorderRef.current.stop();
+                setIsRecording(false);
+            }
+            return;
+        }
+
+        // Tap to start
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             const mediaRecorder = new MediaRecorder(stream);
@@ -37,13 +49,6 @@ export default function MaintenancePage() {
         } catch (err) {
             console.error("Mic access denied:", err);
             alert("Microphone access is required to report maintenance issues.");
-        }
-    };
-
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stop();
-            setIsRecording(false);
         }
     };
 
@@ -166,10 +171,7 @@ export default function MaintenancePage() {
                         {/* Voice Recorder */}
                         <div className="flex flex-col items-center gap-4 pt-4 sm:pt-6">
                             <button
-                                onMouseDown={startRecording}
-                                onMouseUp={stopRecording}
-                                onTouchStart={startRecording}
-                                onTouchEnd={stopRecording}
+                                onClick={toggleRecording}
                                 disabled={isProcessing}
                                 className={cn(
                                     "w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center transition-all shadow-lg",
@@ -189,8 +191,8 @@ export default function MaintenancePage() {
                             </button>
                             <p className="text-sm text-muted-foreground font-medium">
                                 {isProcessing ? "Processing your request..." :
-                                    isRecording ? "Recording... Release to submit" :
-                                        "Hold to describe your issue"}
+                                    isRecording ? "Recording... Tap to submit" :
+                                        "Tap to describe your issue"}
                             </p>
                             <p className="text-xs text-muted-foreground/70 max-w-sm text-center leading-relaxed">
                                 Example: &quot;There&apos;s a leak under the kitchen sink. Water is pooling on the floor and it started yesterday morning.&quot;
