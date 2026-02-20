@@ -30,7 +30,7 @@ class DeepgramService:
                 "paragraphs": True,
             }
             
-            response = self.client.listen.prerecorded.v("1").transcribe_file(payload, options)
+            response = self.client.listen.v1.media.transcribe_file(source=payload, options=options)
             transcript = response["results"]["channels"][0]["alternatives"][0]["transcript"]
             return transcript
             
@@ -59,7 +59,7 @@ class DeepgramService:
                 "intents": True,
             }
             
-            response = self.client.listen.prerecorded.v("1").transcribe_file(payload, options)
+            response = self.client.listen.v1.media.transcribe_file(source=payload, options=options)
             
             channel = response["results"]["channels"][0]["alternatives"][0]
             
@@ -107,28 +107,15 @@ class DeepgramService:
         Model: aura-2-thalia-en (natural female voice, latest quality).
         """
         try:
-            options = {
-                "text": text,
-            }
-            
-            # Use unique temp file to avoid race conditions
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp:
-                tmp_path = tmp.name
-            
-            # Save to unique temp file using Aura-2
-            self.client.speak.v("1").save(
-                tmp_path, options,
-                {"model": "aura-2-thalia-en", "encoding": "mp3", "container": "mp3"}
+            # Generate speech streaming iterator using Aura-2
+            generator = self.client.speak.v1.audio.generate(
+                text=text,
+                model="aura-2-thalia-en",
+                encoding="mp3"
             )
             
-            # Read back bytes
-            with open(tmp_path, "rb") as f:
-                audio_bytes = f.read()
-            
-            # Cleanup
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
-                
+            # Read bytes into memory
+            audio_bytes = b"".join(chunk for chunk in generator)
             return audio_bytes
 
         except Exception as e:
