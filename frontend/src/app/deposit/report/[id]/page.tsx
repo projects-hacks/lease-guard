@@ -1,25 +1,16 @@
-import { createClient } from "next-sanity";
+import { client } from "@/lib/sanity";
 import { notFound } from "next/navigation";
 import { Camera, AlertCircle, CheckCircle, Download } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-// Shared client config
-const sanityClient = createClient({
-    projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "kvnf809l",
-    dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || "production",
-    apiVersion: "2024-02-18",
-    useCdn: false,
-});
-
 interface Props {
     params: Promise<{ id: string }>;
 }
 
 async function getReport(id: string) {
-    // Expand image assets to get URL
-    return sanityClient.fetch(
+    return client.fetch(
         `*[_type == "conditionReport" && _id == $id][0]{
       ...,
       defects[]{

@@ -14,7 +14,7 @@ async def analyze_lease(
     state: str = Form(...)  # State is required for legal context
 ):
     """
-    Uploads a lease PDF, extracts text via Foxit, analyzes via GPT-4o, and saves to Sanity.
+    Uploads a lease PDF, extracts text via Foxit, analyzes via Gemini, and saves to Sanity.
     """
     
     # 1. Save uploaded file temporarily (Foxit might need a file path or bytes)
@@ -56,12 +56,9 @@ async def analyze_lease(
     # 4. Save to Sanity
     sanity_client = SanityClient()
     try:
-        # We need a user ID. For now, generate a temp one or use from auth if we had it.
-        user_id = "demo_user" 
-        doc_id = sanity_client.save_analysis(analysis_result, user_id, filename)
+        user_id = "demo_user"  # TODO: auth integration
+        doc_id = sanity_client.save_analysis(analysis_result, user_id, filename, state=state)
     except Exception as e:
-        # If save fails, we still return the analysis but log error? 
-        # Or fail? Let's fail for now to be safe.
         raise HTTPException(status_code=500, detail=f"Saving to Sanity failed: {str(e)}")
 
     return {

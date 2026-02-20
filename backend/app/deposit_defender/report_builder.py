@@ -1,6 +1,7 @@
 import requests
 import base64
 import uuid
+from datetime import datetime
 from app.sanity_client.client import SanityClient
 from app.config import settings
 
@@ -56,7 +57,7 @@ class ReportBuilder:
         doc = {
             "_id": report_id,
             "_type": "conditionReport",
-            "inspectionDate": "2026-02-18T12:00:00Z", # Should be now()
+            "inspectionDate": datetime.utcnow().isoformat() + "Z",
             "videoUrl": video_url,
             "defects": processed_defects
         }

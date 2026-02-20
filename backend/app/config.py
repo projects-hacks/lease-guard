@@ -6,7 +6,6 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # API Keys
-    # API Keys
     GEMINI_API_KEY: Optional[str] = None
     DEEPGRAM_API_KEY: Optional[str] = None
     DEEPGRAM_PROJECT_ID: Optional[str] = None

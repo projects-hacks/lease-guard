@@ -1,28 +1,17 @@
 import { client } from "@/lib/sanity";
 import { notFound } from "next/navigation";
-import { AlertTriangle, CheckCircle, Info } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, Mic, Volume2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import CounterLetterButton from "@/components/CounterLetterButton";
-
-// Sanity Client for fetching results
-import { createClient } from "next-sanity";
-
-// We need a simplified client here purely for fetching in component
-// In production, move to lib/sanity.ts
-const sanityClient = createClient({
-    projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "kvnf809l",
-    dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || "production",
-    apiVersion: "2024-02-18",
-    useCdn: false, // Ensure fresh data
-});
+import ReadAloudButton from "@/components/ReadAloudButton";
 
 interface Props {
     params: Promise<{ id: string }>;
 }
 
 async function getAnalysis(id: string) {
-    return sanityClient.fetch(
+    return client.fetch(
         `*[_type == "leaseAnalysis" && _id == $id][0]`,
         { id }
     );
@@ -36,7 +25,7 @@ export default async function AnalysisPage({ params }: Props) {
         notFound();
     }
 
-    const { extractedClauses, overallRiskScore, propertyAddress } = analysis;
+    const { extractedClauses, overallRiskScore, propertyAddress, summary } = analysis;
 
     return (
         <div className="min-h-screen bg-background p-6">
@@ -50,9 +39,19 @@ export default async function AnalysisPage({ params }: Props) {
                             {propertyAddress || "Unknown Property"}
                         </p>
                     </div>
-                    <Link href="/upload" className="text-primary hover:underline text-sm md:text-base">
-                        Analyze another lease
-                    </Link>
+                    <div className="flex gap-4">
+                        <Link href="/upload" className="text-primary hover:underline text-sm">
+                            Analyze another lease
+                        </Link>
+                        <Link
+                            href={`/chat?lease=${id}`}
+                            className="flex items-center gap-1 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                        >
+                            <Mic className="w-4 h-4" />
+                            Ask Your Lease
+                        </Link>
+                        <ReadAloudButton analysisId={id} label="Listen" text="" />
+                    </div>
                 </div>
 
                 {/* Score Card */}
@@ -72,6 +71,14 @@ export default async function AnalysisPage({ params }: Props) {
                             Higher score indicates more aggressive or risky clauses.
                         </p>
                     </div>
+
+                    {/* Summary Card */}
+                    {summary && (
+                        <div className="bg-card rounded-xl border p-6 shadow-sm md:col-span-2">
+                            <h3 className="text-sm font-medium text-muted-foreground mb-2">AI Summary</h3>
+                            <p className="text-sm text-foreground/80">{summary}</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Clauses List */}
@@ -103,7 +110,7 @@ export default async function AnalysisPage({ params }: Props) {
                                         </div>
 
                                         <p className="text-muted-foreground text-sm italic mb-4 bg-muted/50 p-3 rounded-md border">
-                                            "{clause.originalText}"
+                                            &quot;{clause.originalText}&quot;
                                         </p>
 
                                         <div className="space-y-2">
