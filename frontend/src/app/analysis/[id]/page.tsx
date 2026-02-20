@@ -120,7 +120,7 @@ export default async function AnalysisPage({ params }: Props) {
                                             )}>
                                                 {clause.riskLevel}
                                             </span>
-                                            <h3 className="font-bold text-xl capitalize text-foreground">{clause.clauseType.replace('_', ' ')}</h3>
+                                            <h3 className="font-bold text-xl capitalize text-foreground">{clause.clauseType.replace(/_/g, ' ')}</h3>
                                         </div>
 
                                         <div className="relative">

@@ -41,7 +41,7 @@ export default function CounterLetterButton({ clause, className, variant = "defa
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `counter_letter_${clause.clauseType}.pdf`;
+            a.download = `counter_letter_${clause.clauseType.replace(/ /g, '_')}.pdf`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);

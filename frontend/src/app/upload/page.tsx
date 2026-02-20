@@ -50,7 +50,7 @@ export default function UploadPage() {
                 id: data.analysisId,
                 name: file.name.replace(/\.pdf$/i, ""),
                 state,
-                riskScore: data.overallRiskScore ?? 0,
+                riskScore: data.results?.overallRiskScore ?? 0,
                 uploadedAt: new Date().toISOString(),
             });
             router.push(`/leases/${data.analysisId}`);
