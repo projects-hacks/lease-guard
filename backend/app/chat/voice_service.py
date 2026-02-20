@@ -12,7 +12,7 @@ class DeepgramService:
     def __init__(self):
         if not settings.DEEPGRAM_API_KEY:
             raise ValueError("Deepgram API Key not set")
-        self.client = DeepgramClient(settings.DEEPGRAM_API_KEY)
+        self.client = DeepgramClient(api_key=settings.DEEPGRAM_API_KEY)
 
     def transcribe_audio(self, audio_bytes: bytes, mimetype: str = "audio/webm") -> str:
         """
