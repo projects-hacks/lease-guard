@@ -1,4 +1,4 @@
-const API_BASE_URL = "/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function uploadLease(file: File, state: string) {
     const formData = new FormData();

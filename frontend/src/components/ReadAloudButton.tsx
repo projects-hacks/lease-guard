@@ -23,7 +23,7 @@ export default function ReadAloudButton({ text, className, label = "Read Aloud",
 
             if (analysisId) {
                 // Use the pre-built analysis TTS endpoint
-                const res = await fetch(`/api/v1/tts/read-analysis/${analysisId}`, {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tts/read-analysis/${analysisId}`, {
                     method: "POST",
                 });
                 if (!res.ok) throw new Error("TTS failed");
@@ -33,7 +33,7 @@ export default function ReadAloudButton({ text, className, label = "Read Aloud",
                 const formData = new FormData();
                 formData.append("text", text);
 
-                const res = await fetch("/api/v1/tts/read-aloud", {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tts/read-aloud", {
                     method: "POST",
                     body: formData,
                 });

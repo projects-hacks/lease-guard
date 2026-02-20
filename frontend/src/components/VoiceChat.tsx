@@ -89,7 +89,7 @@ export default function VoiceChat({ leaseId }: Props) {
         }
 
         try {
-            const response = await fetch("/api/v1/chat/voice", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/voice", {
                 method: "POST",
                 body: formData,
             });

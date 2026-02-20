@@ -14,17 +14,17 @@ spec:
       labels:
         app: leaseguard-backend
     spec:
+      imagePullSecrets:
+      - name: ghcr-secret
       containers:
       - name: backend
-        image: leaseguard-backend:latest
+        image: ghcr.io/projects-hacks/lease-guard-backend:main
         imagePullPolicy: Always
         ports:
         - containerPort: 8000
         envFrom:
         - secretRef:
             name: leaseguard-secrets
-        - configMapRef:
-            name: leaseguard-config
         resources:
           requests:
             cpu: "250m"

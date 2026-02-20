@@ -23,7 +23,7 @@ export default function RentCalculator() {
         setResult(null);
 
         try {
-            const res = await fetch("/api/v1/rent/analyze", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/rent/analyze", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -53,7 +53,7 @@ export default function RentCalculator() {
             const tenantName = prompt("Enter your name:", "John Doe") || "John Doe";
             const landlordName = prompt("Enter landlord name:", "Landlord Inc.") || "Landlord Inc.";
 
-            const res = await fetch("/api/v1/generate/negotiation-letter", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/generate/negotiation-letter", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
