@@ -1,0 +1,33 @@
+{
+    "name": "LeaseGuard",
+    "short_name": "LeaseGuard",
+    "description": "AI-powered tenant protection — lease analysis, deposit defense, rent insights, and voice legal assistant.",
+    "start_url": "/",
+    "id": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#09090b",
+    "theme_color": "#09090b",
+    "scope": "/",
+    "icons": [
+        {
+            "src": "/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": [
+        "legal",
+        "finance",
+        "utilities"
+    ],
+    "screenshots": [],
+    "prefer_related_applications": false
+}

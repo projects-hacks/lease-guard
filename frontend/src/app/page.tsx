@@ -1,106 +1,138 @@
 import Link from "next/link";
-import { ShieldCheck, Camera, DollarSign, ArrowRight, CheckCircle2, Video, FileText } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ShieldCheck, Camera, DollarSign, ArrowRight, CheckCircle2, Mic, Wrench } from "lucide-react";
+
+const FEATURES = [
+  {
+    icon: ShieldCheck,
+    name: "Legal Shield",
+    href: "/upload",
+    color: "text-primary",
+    bg: "bg-primary/10",
+    bgHover: "group-hover:bg-primary/20",
+    description: "Upload your lease PDF. AI detects illegal clauses, red flags, and hidden fees.",
+    bullets: [
+      "Gemini Clause Analysis",
+      "Foxit PDF Extraction",
+      "Auto Counter-Letter PDF",
+    ],
+  },
+  {
+    icon: Camera,
+    name: "Deposit Defender",
+    href: "/deposit",
+    color: "text-orange-500",
+    bg: "bg-orange-500/10",
+    bgHover: "group-hover:bg-orange-500/20",
+    description: "Record a video walkthrough. Computer Vision identifies defects to protect your deposit.",
+    bullets: [
+      "OpenCV Frame Extraction",
+      "Gemini Vision Detection",
+      "Condition Report PDF",
+    ],
+  },
+  {
+    icon: DollarSign,
+    name: "Rent Radar",
+    href: "/rent",
+    color: "text-green-500",
+    bg: "bg-green-500/10",
+    bgHover: "group-hover:bg-green-500/20",
+    description: "Know true market value. Compare your rent against real-time data from You.com.",
+    bullets: [
+      "You.com Market Search",
+      "Rent Control Detection",
+      "Negotiation Letter PDF",
+    ],
+  },
+  {
+    icon: Wrench,
+    name: "Maintenance Reporter",
+    href: "/maintenance",
+    color: "text-blue-500",
+    bg: "bg-blue-500/10",
+    bgHover: "group-hover:bg-blue-500/20",
+    description: "Describe issues by voice. AI creates a formal maintenance request letter.",
+    bullets: [
+      "Deepgram Nova-3 STT",
+      "Audio Intelligence",
+      "Auto-Generate PDF",
+    ],
+  },
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-[calc(100vh-3.5rem)]">
-      {/* Hero Section */}
-      <section className="flex-1 flex flex-col items-center justify-center space-y-10 py-24 text-center md:py-32 lg:py-40 bg-gradient-to-b from-background to-muted/20">
-        <div className="container flex flex-col items-center gap-4 px-4 md:px-6">
-          <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80 mb-2">
-            New: AI-Powered Deposit Protection
+    <div className="flex flex-col min-h-[calc(100dvh-3.5rem)]">
+      {/* Hero */}
+      <section className="flex-1 flex flex-col items-center justify-center space-y-8 py-16 px-4 text-center md:py-24 lg:py-32 bg-gradient-to-b from-background to-muted/20">
+        <div className="flex flex-col items-center gap-4 max-w-2xl">
+          <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-primary text-primary-foreground">
+            AI-Powered Tenant Protection
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60 pb-2">
+          <h1 className="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60 pb-2">
             LeaseGuard
           </h1>
-          <p className="max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-            Your AI-powered legal shield against unfair leases, stolen deposits, and overpriced rent.
-            Empowering tenants with GPT-4o, Computer Vision, and Real-time Market Data.
+          <p className="max-w-[600px] text-muted-foreground text-base md:text-lg">
+            Your AI shield against unfair leases, stolen deposits, and overpriced rent.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 mt-8 w-full max-w-sm sm:max-w-none justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 mt-6 w-full max-w-xs sm:max-w-none justify-center">
             <Link
               href="/upload"
-              className="inline-flex h-12 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+              className="inline-flex h-12 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
             >
               Analyze My Lease <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
             <Link
-              href="/deposit"
-              className="inline-flex h-12 items-center justify-center rounded-md border border-input bg-background px-8 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+              href="/chat"
+              className="inline-flex h-12 items-center justify-center rounded-md border border-input bg-background px-6 text-sm font-medium shadow-sm transition-colors hover:bg-accent"
             >
-              Start Move-In Inspection
+              <Mic className="mr-2 h-4 w-4" />
+              Voice Assistant
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section className="container py-12 md:py-24 lg:py-32 px-4 md:px-6 mx-auto">
-        <div className="grid gap-12 lg:grid-cols-3 lg:gap-8">
-
-          {/* Feature 1: Legal Shield */}
-          <div className="flex flex-col items-center space-y-4 text-center group hover:bg-accent/50 p-6 rounded-xl transition-colors">
-            <div className="p-4 bg-primary/10 rounded-full group-hover:bg-primary/20 transition-colors">
-              <FileText className="h-10 w-10 text-primary" />
-            </div>
-            <h2 className="text-2xl font-bold">Legal Shield</h2>
-            <p className="max-w-[300px] text-muted-foreground">
-              Upload your lease PDF. Our AI detects illegal clauses, red flags, and hidden fees instantly.
-            </p>
-            <ul className="text-sm text-left list-none space-y-2 mt-4 text-muted-foreground/80">
-              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> GPT-4o Clause Analysis</li>
-              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Foxit PDF Extraction</li>
-              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Auto-Generate Counter-Letters</li>
-            </ul>
-          </div>
-
-          {/* Feature 2: Deposit Defender */}
-          <div className="flex flex-col items-center space-y-4 text-center group hover:bg-accent/50 p-6 rounded-xl transition-colors">
-            <div className="p-4 bg-orange-500/10 rounded-full group-hover:bg-orange-500/20 transition-colors">
-              <Camera className="h-10 w-10 text-orange-500" />
-            </div>
-            <h2 className="text-2xl font-bold">Deposit Defender</h2>
-            <p className="max-w-[300px] text-muted-foreground">
-              Record a video walkthrough. Computer Vision identifies defects to protect your security deposit.
-            </p>
-            <ul className="text-sm text-left list-none space-y-2 mt-4 text-muted-foreground/80">
-              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> OpenCV Frame Extraction</li>
-              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> GPT-4o Vision Defect Detection</li>
-              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Condition Report PDF</li>
-            </ul>
-          </div>
-
-          {/* Feature 3: Rent Radar */}
-          <div className="flex flex-col items-center space-y-4 text-center group hover:bg-accent/50 p-6 rounded-xl transition-colors">
-            <div className="p-4 bg-green-500/10 rounded-full group-hover:bg-green-500/20 transition-colors">
-              <DollarSign className="h-10 w-10 text-green-500" />
-            </div>
-            <h2 className="text-2xl font-bold">Rent Radar</h2>
-            <p className="max-w-[300px] text-muted-foreground">
-              Know the true market value. Compare your rent against real-time data and negotiate better rates.
-            </p>
-            <ul className="text-sm text-left list-none space-y-2 mt-4 text-muted-foreground/80">
-              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Market Rent Estimation</li>
-              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Fair Value Rating</li>
-              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Negotiation Tips</li>
-            </ul>
-          </div>
-
+      {/* Features */}
+      <section className="py-12 md:py-20 px-4">
+        <div className="max-w-5xl mx-auto grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {FEATURES.map((f) => {
+            const Icon = f.icon;
+            return (
+              <Link
+                key={f.href}
+                href={f.href}
+                className="group flex flex-col items-center space-y-3 text-center p-5 rounded-xl border bg-card hover:shadow-md transition-all active:scale-[0.98]"
+              >
+                <div className={`p-3 rounded-full ${f.bg} ${f.bgHover} transition-colors`}>
+                  <Icon className={`h-7 w-7 ${f.color}`} />
+                </div>
+                <h2 className="text-lg font-bold">{f.name}</h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">{f.description}</p>
+                <ul className="text-xs text-left list-none space-y-1.5 mt-auto text-muted-foreground/80 w-full">
+                  {f.bullets.map((b, i) => (
+                    <li key={i} className="flex gap-2 items-center">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-6 w-full shrink-0 items-center px-4 md:px-6 border-t bg-background">
-        <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+      <footer className="py-6 px-4 border-t bg-background">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
           <p className="text-xs text-muted-foreground">
-            © 2026 LeaseGuard Inc. Built for DeveloperWeek Hackathon.
+            © 2026 LeaseGuard • DeveloperWeek Hackathon
           </p>
-          <div className="flex gap-4">
-            <Link href="/terms" className="text-xs hover:underline underline-offset-4">Terms of Service</Link>
-            <Link href="/privacy" className="text-xs hover:underline underline-offset-4">Privacy</Link>
-          </div>
+          <p className="text-xs text-muted-foreground">
+            Powered by Gemini • Deepgram • Foxit • You.com • Sanity
+          </p>
         </div>
       </footer>
     </div>
