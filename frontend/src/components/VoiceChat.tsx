@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Mic, Check, Loader2, Play, Square, Send, Link2, Info, Upload } from "lucide-react";
+import { Mic, Loader2, Play, Square, Volume2, Link2, Info } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +17,7 @@ interface Props {
 
 export default function VoiceChat({ leaseId }: Props) {
     const [isRecording, setIsRecording] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(false);
     const [hintDismissed, setHintDismissed] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
         {
@@ -30,13 +31,12 @@ export default function VoiceChat({ leaseId }: Props) {
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
-    // Auto-scroll to bottom
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    // Cleanup URLs on unmount
     useEffect(() => {
         return () => {
             messages.forEach(m => {
@@ -45,7 +45,23 @@ export default function VoiceChat({ leaseId }: Props) {
         };
     }, []);
 
+    const playAudio = (src: string): Promise<void> => {
+        return new Promise((resolve) => {
+            if (currentAudioRef.current) {
+                currentAudioRef.current.pause();
+                currentAudioRef.current.src = "";
+            }
+            const audio = new Audio(src);
+            currentAudioRef.current = audio;
+            setIsPlaying(true);
+            audio.onended = () => { setIsPlaying(false); resolve(); };
+            audio.onerror = () => { setIsPlaying(false); resolve(); };
+            audio.play().catch(() => { setIsPlaying(false); resolve(); });
+        });
+    };
+
     const startRecording = async () => {
+        if (isPlaying || isProcessing) return;
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             const mediaRecorder = new MediaRecorder(stream);
@@ -79,34 +95,30 @@ export default function VoiceChat({ leaseId }: Props) {
 
     const handleSendAudio = async (audioBlob: Blob) => {
         setIsProcessing(true);
-
         const formData = new FormData();
         formData.append("file", audioBlob, "voice_query.webm");
-
-        // Pass lease context if available
-        if (leaseId) {
-            formData.append("lease_id", leaseId);
-        }
+        if (leaseId) formData.append("lease_id", leaseId);
 
         try {
-            const res = await fetch(`/api/v1/chat/voice?lease_id=${leaseId || ""}`, {
+            const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+            const res = await fetch(`${apiBase}/chat/voice?lease_id=${leaseId || ""}`, {
                 method: "POST",
                 body: formData,
             });
 
             if (!res.ok) throw new Error("Voice processing failed");
             const data = await res.json();
+            const audioSrc = data.audio ? `data:audio/mp3;base64,${data.audio}` : undefined;
 
             setMessages(prev => [
                 ...prev,
                 { role: "user", content: data.transcript },
-                { role: "assistant", content: data.answer, audioUrl: data.audio ? `data:audio/mp3;base64,${data.audio}` : undefined }
+                { role: "assistant", content: data.answer, audioUrl: audioSrc }
             ]);
 
-            // Auto-play response
-            if (data.audio) {
-                const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
-                audio.play().catch(e => console.error("Auto-play blocked:", e));
+            // Wait for audio to finish before user can record again
+            if (audioSrc) {
+                await playAudio(audioSrc);
             }
 
         } catch (error) {
@@ -117,9 +129,17 @@ export default function VoiceChat({ leaseId }: Props) {
         }
     };
 
+    const buttonDisabled = isProcessing || isPlaying;
+    const statusLabel = isProcessing
+        ? "Thinking..."
+        : isPlaying
+            ? "AI is speaking — please wait"
+            : isRecording
+                ? "Release to send"
+                : "Hold to speak";
+
     return (
         <div className="flex flex-col h-[600px] w-full max-w-md mx-auto glass-card rounded-3xl overflow-hidden animate-fade-in-up">
-            {/* Lease Context Indicator */}
             {leaseId && (
                 <div className="px-5 py-3 bg-primary/20 border-b border-primary/30 flex items-center gap-3 text-sm text-primary font-bold shadow-inner">
                     <Link2 className="w-4 h-4" />
@@ -127,7 +147,6 @@ export default function VoiceChat({ leaseId }: Props) {
                 </div>
             )}
 
-            {/* No Lease Hint */}
             {!leaseId && !hintDismissed && (
                 <div className="px-5 py-3 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between gap-3 text-sm shadow-inner">
                     <div className="flex items-center gap-2 text-amber-500">
@@ -148,7 +167,6 @@ export default function VoiceChat({ leaseId }: Props) {
                 </div>
             )}
 
-            {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-5 space-y-5">
                 {messages.map((m, idx) => (
                     <div key={idx} className={cn("flex w-full", m.role === "user" ? "justify-end" : "justify-start")}>
@@ -161,7 +179,7 @@ export default function VoiceChat({ leaseId }: Props) {
                             <p>{m.content}</p>
                             {m.audioUrl && (
                                 <button
-                                    onClick={() => new Audio(m.audioUrl!).play()}
+                                    onClick={() => playAudio(m.audioUrl!)}
                                     className="mt-3 text-xs flex items-center gap-1.5 opacity-80 hover:opacity-100 font-bold bg-black/20 px-3 py-1.5 rounded-full w-fit transition-colors"
                                 >
                                     <Play className="w-3.5 h-3.5" /> Replay Voice
@@ -181,12 +199,13 @@ export default function VoiceChat({ leaseId }: Props) {
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Controls */}
             <div className="p-6 border-t border-white/5 bg-background/50 backdrop-blur-md">
                 <div className="flex justify-center relative">
-                    {/* Ripple Effect when recording */}
                     {isRecording && (
                         <div className="absolute inset-0 m-auto w-20 h-20 bg-red-500/30 rounded-full animate-ping pointer-events-none" />
+                    )}
+                    {isPlaying && (
+                        <div className="absolute inset-0 m-auto w-20 h-20 bg-primary/20 rounded-full animate-ping pointer-events-none" />
                     )}
 
                     <button
@@ -198,20 +217,24 @@ export default function VoiceChat({ leaseId }: Props) {
                             "relative z-10 w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl border border-white/10",
                             isRecording
                                 ? "bg-red-500 scale-110 shadow-red-500/40 border-red-400"
-                                : "bg-gradient-to-br from-primary to-indigo-600 hover:opacity-90 hover:scale-105 shadow-primary/30",
-                            isProcessing ? "opacity-50 cursor-not-allowed scale-100" : "cursor-pointer"
+                                : isPlaying
+                                    ? "bg-primary/40 scale-100 cursor-not-allowed"
+                                    : "bg-gradient-to-br from-primary to-indigo-600 hover:opacity-90 hover:scale-105 shadow-primary/30",
+                            buttonDisabled && !isRecording ? "opacity-50 cursor-not-allowed" : ""
                         )}
-                        disabled={isProcessing}
+                        disabled={buttonDisabled}
                     >
                         {isRecording ? (
                             <Square className="w-6 h-6 text-white fill-current animate-pulse" />
+                        ) : isPlaying ? (
+                            <Volume2 className="w-7 h-7 text-white animate-pulse" />
                         ) : (
                             <Mic className="w-7 h-7 text-white" />
                         )}
                     </button>
                 </div>
                 <p className="text-center text-xs text-muted-foreground font-semibold uppercase tracking-wider mt-5">
-                    {isProcessing ? "Processing" : (isRecording ? "Release to Send" : "Hold to Speak")}
+                    {statusLabel}
                 </p>
             </div>
         </div>
