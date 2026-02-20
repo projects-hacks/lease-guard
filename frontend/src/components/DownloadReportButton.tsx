@@ -7,62 +7,19 @@ interface Props {
     reportId: string;
 }
 
-// Detect iOS / Safari which blocks programmatic blob downloads
-const isIOS = () =>
-    typeof navigator !== "undefined" &&
-    /iphone|ipad|ipod/i.test(navigator.userAgent);
-
 export default function DownloadReportButton({ reportId }: Props) {
     const [loading, setLoading] = useState(false);
 
-    const handleDownload = async () => {
+    const handleDownload = () => {
         setLoading(true);
-        try {
-            const res = await fetch(`/api/v1/generate/report/${reportId}`);
-            if (!res.ok) throw new Error("Failed to generate PDF");
+        // Direct navigation is often the most reliable way to trigger a download
+        // on iOS Safari, bypassing all blob and fetch restrictions.
+        // We use the Next.js API route proxy which points to the backend.
+        window.location.href = `/api/v1/generate/report/${reportId}`;
 
-            const blob = await res.blob();
-
-            if (isIOS()) {
-                // Feature detect Web Share API for files (iOS 15+)
-                const file = new File([blob], `condition-report-${reportId}.pdf`, { type: "application/pdf" });
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    try {
-                        await navigator.share({
-                            files: [file],
-                            title: "Condition Report",
-                        });
-                        return;
-                    } catch (shareErr: any) {
-                        // User cancelled the share sheet
-                        if (shareErr.name !== "AbortError") {
-                            console.error("Share failed:", shareErr);
-                        }
-                        return;
-                    }
-                }
-
-                // Classic fallback for very old iOS versions
-                const url = URL.createObjectURL(blob);
-                window.location.href = url;
-                setTimeout(() => URL.revokeObjectURL(url), 5000);
-            } else {
-                // Desktop / Android Chrome: programmatic download works fine
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `condition-report-${reportId}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }
-        } catch (err) {
-            console.error("Download failed:", err);
-            alert("Could not download the report. Please try again.");
-        } finally {
-            setLoading(false);
-        }
+        // Reset loading state after a short delay since we can't reliably
+        // detect when the native download finishes via window.location
+        setTimeout(() => setLoading(false), 2000);
     };
 
     return (
@@ -76,7 +33,7 @@ export default function DownloadReportButton({ reportId }: Props) {
             ) : (
                 <Download className="w-4 h-4" />
             )}
-            {loading ? "Generating..." : isIOS() ? "Open PDF" : "Download PDF"}
+            {loading ? "Generating..." : "Download PDF"}
         </button>
     );
 }
