@@ -1,19 +1,22 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from app.chat.voice_service import DeepgramService
 from app.chat.bot import LegalChatBot
+from app.sanity_client.client import SanityClient
 import base64
-import tempfile
-import os
 
 router = APIRouter()
 
 @router.post("/chat/voice")
-async def voice_chat(file: UploadFile = File(...)):
+async def voice_chat(
+    file: UploadFile = File(...),
+    lease_id: str = Form(None)
+):
     """
-    Voice-enabled legal Q&A.
-    1. Transcribe audio (Deepgram Nova-2)
-    2. Get legal answer (GPT-4o)
-    3. Generate speech response (Deepgram Aura)
+    Voice-enabled legal Q&A with optional lease context.
+    1. Transcribe audio (Deepgram Nova-3)
+    2. If lease_id provided, fetch stored clauses from Sanity for context-aware answer
+    3. Get legal answer (Gemini)
+    4. Generate speech response (Deepgram Aura)
     """
     
     # 1. Read Audio
@@ -25,9 +28,6 @@ async def voice_chat(file: UploadFile = File(...)):
     # 2. Transcribe (STT)
     dg_service = DeepgramService()
     try:
-        # Save to temp file if SDK requires it, but buffer usually works.
-        # My implementation supports buffer.
-        # Note: mimetype might need detection or fixed webm/wav from frontend
         transcript = dg_service.transcribe_audio(audio_bytes, mimetype=file.content_type or "audio/webm")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"STT Failed: {e}")
@@ -35,10 +35,22 @@ async def voice_chat(file: UploadFile = File(...)):
     if not transcript:
         raise HTTPException(status_code=400, detail="Could not understand audio.")
 
-    # 3. Get Answer (LLM)
+    # 3. Get Answer (LLM) — with or without lease context
     bot = LegalChatBot()
     try:
-        answer = bot.get_legal_answer(transcript)
+        if lease_id:
+            # Fetch the user's stored lease clauses from Sanity
+            sanity = SanityClient()
+            lease_data = sanity.get_analysis(lease_id)
+            
+            if lease_data:
+                clauses = lease_data.get("extractedClauses", [])
+                state = lease_data.get("state", "CA")
+                answer = bot.get_lease_answer(transcript, clauses, state)
+            else:
+                answer = bot.get_legal_answer(transcript)
+        else:
+            answer = bot.get_legal_answer(transcript)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM Failed: {e}")
 
@@ -54,5 +66,6 @@ async def voice_chat(file: UploadFile = File(...)):
     return {
         "transcript": transcript,
         "answer": answer,
-        "audio": audio_base64
+        "audio": audio_base64,
+        "lease_context": lease_id is not None
     }

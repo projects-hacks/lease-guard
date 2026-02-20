@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Mic, Check, Loader2, Play, Square, Send } from "lucide-react";
+import { Mic, Check, Loader2, Play, Square, Send, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -10,14 +10,29 @@ interface Message {
     audioUrl?: string;
 }
 
-export default function VoiceChat() {
+interface Props {
+    leaseId?: string;
+}
+
+export default function VoiceChat({ leaseId }: Props) {
     const [isRecording, setIsRecording] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
-        { role: "assistant", content: "Hi! I'm LeaseGuard AI. Ask me anything about your lease or tenant rights." }
+        {
+            role: "assistant",
+            content: leaseId
+                ? "Hi! I have your lease loaded. Ask me anything — like \"Can I have a pet?\" or \"What's my late fee?\""
+                : "Hi! I'm LeaseGuard AI. Ask me anything about tenant rights or lease agreements."
+        }
     ]);
     const [isProcessing, setIsProcessing] = useState(false);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // Auto-scroll to bottom
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
 
     // Cleanup URLs on unmount
     useEffect(() => {
@@ -63,11 +78,13 @@ export default function VoiceChat() {
     const handleSendAudio = async (audioBlob: Blob) => {
         setIsProcessing(true);
 
-        // Optimistic user message (placeholder)
-        // Actually we don't know the text yet. Wait for response.
-
         const formData = new FormData();
         formData.append("file", audioBlob, "voice_query.webm");
+
+        // Pass lease context if available
+        if (leaseId) {
+            formData.append("lease_id", leaseId);
+        }
 
         try {
             const response = await fetch("/api/v1/chat/voice", {
@@ -79,7 +96,6 @@ export default function VoiceChat() {
 
             const data = await response.json();
 
-            // Update Conversation
             setMessages(prev => [
                 ...prev,
                 { role: "user", content: data.transcript },
@@ -102,6 +118,14 @@ export default function VoiceChat() {
 
     return (
         <div className="flex flex-col h-[600px] w-full max-w-md mx-auto bg-card border rounded-xl shadow-lg overflow-hidden">
+            {/* Lease Context Indicator */}
+            {leaseId && (
+                <div className="px-4 py-2 bg-primary/10 border-b flex items-center gap-2 text-xs text-primary font-medium">
+                    <Link2 className="w-3 h-3" />
+                    Lease loaded — answers are based on YOUR lease clauses
+                </div>
+            )}
+
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {messages.map((m, idx) => (
@@ -113,7 +137,7 @@ export default function VoiceChat() {
                             <p>{m.content}</p>
                             {m.audioUrl && (
                                 <button
-                                    onClick={() => new Audio(m.audioUrl).play()}
+                                    onClick={() => new Audio(m.audioUrl!).play()}
                                     className="mt-2 text-xs flex items-center gap-1 opacity-70 hover:opacity-100"
                                 >
                                     <Play className="w-3 h-3" /> Replay Voice
@@ -130,6 +154,7 @@ export default function VoiceChat() {
                         </div>
                     </div>
                 )}
+                <div ref={messagesEndRef} />
             </div>
 
             {/* Controls */}
@@ -138,7 +163,6 @@ export default function VoiceChat() {
                     <button
                         onMouseDown={startRecording}
                         onMouseUp={stopRecording}
-                        // For touch devices
                         onTouchStart={startRecording}
                         onTouchEnd={stopRecording}
                         className={cn(
