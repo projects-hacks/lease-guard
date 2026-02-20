@@ -12,3 +12,4 @@ httpx
 pypdf
 opencv-python-headless
 numpy
+Pillow
