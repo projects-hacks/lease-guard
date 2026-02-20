@@ -89,14 +89,13 @@ export default function VoiceChat({ leaseId }: Props) {
         }
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/voice", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/voice?lease_id=${leaseId || ""}`, {
                 method: "POST",
                 body: formData,
             });
 
-            if (!response.ok) throw new Error("Voice processing failed");
-
-            const data = await response.json();
+            if (!res.ok) throw new Error("Voice processing failed");
+            const data = await res.json();
 
             setMessages(prev => [
                 ...prev,

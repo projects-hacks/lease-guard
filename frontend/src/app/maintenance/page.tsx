@@ -58,7 +58,7 @@ export default function MaintenancePage() {
         formData.append("property_address", propertyAddress || "");
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/maintenance/report", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/maintenance/report`, {
                 method: "POST",
                 body: formData,
             });

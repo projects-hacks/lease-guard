@@ -33,7 +33,7 @@ export default function ReadAloudButton({ text, className, label = "Read Aloud",
                 const formData = new FormData();
                 formData.append("text", text);
 
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tts/read-aloud", {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tts/read-aloud`, {
                     method: "POST",
                     body: formData,
                 });

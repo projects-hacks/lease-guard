@@ -23,7 +23,7 @@ export default function DepositPage() {
 
             setProcessingStage("Analyzing frames (OpenCV + GPT-4o)... this may take a minute.");
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/deposit/upload", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/deposit/upload`, {
                 method: "POST",
                 body: formData,
             });

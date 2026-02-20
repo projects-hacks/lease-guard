@@ -28,7 +28,7 @@ export default function RentCalculator() {
         setLetterPdf(null);
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/rent/analyze", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/rent/analyze`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -57,7 +57,7 @@ export default function RentCalculator() {
             const tenantName = prompt("Enter your name:", "John Doe") || "John Doe";
             const landlordName = prompt("Enter landlord name:", "Landlord Inc.") || "Landlord Inc.";
 
-            const res = await fetch(`${ process.env.NEXT_PUBLIC_API_URL } / generate / negotiation - letter`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/generate/negotiation-letter`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -203,7 +203,7 @@ export default function RentCalculator() {
                                 <CheckCircle2 className="w-4 h-4" /> Letter Generated
                             </span>
                             <a
-                                href={`data: application / pdf; base64, ${ letterPdf } `}
+                                href={`data:application/pdf;base64,${letterPdf}`}
                                 download="Rent_Negotiation_Letter.pdf"
                                 className="text-sm font-bold text-emerald-400 hover:text-emerald-300 underline underline-offset-4 flex items-center gap-1"
                             >
