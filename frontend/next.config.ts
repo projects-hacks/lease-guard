@@ -11,18 +11,20 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
+    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+    const backendBase = backendUrl.replace('/api/v1', '');
     return [
       {
         source: "/api/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"}/:path*`,
+        destination: `${backendUrl}/:path*`,
       },
       {
         source: "/docs",
-        destination: `${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || "http://127.0.0.1:8000"}/docs`,
+        destination: `${backendBase}/docs`,
       },
       {
         source: "/openapi.json",
-        destination: `${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || "http://127.0.0.1:8000"}/openapi.json`,
+        destination: `${backendBase}/openapi.json`,
       },
     ];
   },

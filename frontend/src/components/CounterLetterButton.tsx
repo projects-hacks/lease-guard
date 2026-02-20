@@ -22,7 +22,7 @@ export default function CounterLetterButton({ clause, className, variant = "defa
             const landlordName = prompt("Enter Landlord Name:", "Landlord Inc.") || "Landlord Inc.";
             const state = "CA"; // Should come from analysis context
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/generate/counter-letter`, {
+            const response = await fetch(`/api/v1/generate/counter-letter`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

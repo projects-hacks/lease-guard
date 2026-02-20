@@ -18,7 +18,10 @@ export default function VideoRecorder({ onRecordingComplete }: Props) {
 
     const startRecording = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { ideal: "environment" } },
+                audio: true,
+            });
             if (videoPreviewRef.current) {
                 videoPreviewRef.current.srcObject = stream;
             }
