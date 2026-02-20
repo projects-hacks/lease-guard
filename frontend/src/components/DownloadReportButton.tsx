@@ -7,6 +7,11 @@ interface Props {
     reportId: string;
 }
 
+// Detect iOS / Safari which blocks programmatic blob downloads
+const isIOS = () =>
+    typeof navigator !== "undefined" &&
+    /iphone|ipad|ipod/i.test(navigator.userAgent);
+
 export default function DownloadReportButton({ reportId }: Props) {
     const [loading, setLoading] = useState(false);
 
@@ -19,14 +24,22 @@ export default function DownloadReportButton({ reportId }: Props) {
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
 
-            // Create a temporary link element — works in PWA + all browsers
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `condition-report-${reportId}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            if (isIOS()) {
+                // iOS Safari: programmatic clicks are blocked — open PDF in browser tab
+                // The user can then use the Share Sheet to save to Files
+                window.open(url, "_blank");
+                // Cleanup after short delay
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+            } else {
+                // Desktop / Android Chrome: programmatic download works fine
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `condition-report-${reportId}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
         } catch (err) {
             console.error("Download failed:", err);
             alert("Could not download the report. Please try again.");
@@ -46,7 +59,7 @@ export default function DownloadReportButton({ reportId }: Props) {
             ) : (
                 <Download className="w-4 h-4" />
             )}
-            {loading ? "Generating..." : "Download PDF"}
+            {loading ? "Generating..." : isIOS() ? "Open PDF" : "Download PDF"}
         </button>
     );
 }
