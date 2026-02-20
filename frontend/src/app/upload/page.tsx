@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { uploadLease } from "@/lib/api";
+import { saveLeaseToStore } from "@/lib/leaseStore";
 import { Upload, Loader2, FileText, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -44,8 +45,15 @@ export default function UploadPage() {
 
         try {
             const data = await uploadLease(file, state);
-            // specific Sanity ID is returned in data.analysisId
-            router.push(`/analysis/${data.analysisId}`);
+            // Save lease metadata to localStorage for the dashboard
+            saveLeaseToStore({
+                id: data.analysisId,
+                name: file.name.replace(/\.pdf$/i, ""),
+                state,
+                riskScore: data.overallRiskScore ?? 0,
+                uploadedAt: new Date().toISOString(),
+            });
+            router.push(`/leases/${data.analysisId}`);
         } catch (err: any) {
             console.error(err);
             setError(err.message || "Something went wrong during analysis.");

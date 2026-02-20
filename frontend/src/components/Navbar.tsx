@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShieldCheck, FileText, Camera, DollarSign, Mic, Wrench, Home } from "lucide-react";
+import { ShieldCheck, FolderOpen, Camera, DollarSign, Mic, Wrench, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-    { name: "Shield", href: "/upload", icon: FileText },
+    { name: "Leases", href: "/leases", icon: FolderOpen },
     { name: "Deposit", href: "/deposit", icon: Camera },
     { name: "Rent", href: "/rent", icon: DollarSign },
     { name: "Fix", href: "/maintenance", icon: Wrench },
