@@ -20,18 +20,14 @@ class DeepgramService:
         Best for: pre-recorded voice notes, uploaded audio files.
         """
         try:
-            payload = {"buffer": audio_bytes}
-            
-            options = {
-                "model": "nova-3",
-                "smart_format": True,
-                "mimetype": mimetype,
-                "punctuate": True,
-                "paragraphs": True,
-            }
-            
-            response = self.client.listen.v1.media.transcribe_file(source=payload, options=options)
-            transcript = response["results"]["channels"][0]["alternatives"][0]["transcript"]
+            response = self.client.listen.v1.media.transcribe_file(
+                request=audio_bytes,
+                model="nova-3",
+                smart_format=True,
+                punctuate=True,
+                paragraphs=True,
+            )
+            transcript = response.results.channels[0].alternatives[0].transcript
             return transcript
             
         except Exception as e:
@@ -47,46 +43,36 @@ class DeepgramService:
         Best for: maintenance requests where we need structured data.
         """
         try:
-            payload = {"buffer": audio_bytes}
+            response = self.client.listen.v1.media.transcribe_file(
+                request=audio_bytes,
+                model="nova-3",
+                smart_format=True,
+                punctuate=True,
+                summarize="v2",
+                topics=True,
+                intents=True,
+            )
             
-            options = {
-                "model": "nova-2",
-                "smart_format": True,
-                "mimetype": mimetype,
-                "punctuate": True,
-                "summarize": "v2",
-                "topics": True,
-                "intents": True,
-            }
-            
-            response = self.client.listen.v1.media.transcribe_file(source=payload, options=options)
-            
-            channel = response["results"]["channels"][0]["alternatives"][0]
+            channel = response.results.channels[0].alternatives[0]
             
             result = {
-                "transcript": channel.get("transcript", ""),
+                "transcript": channel.transcript,
                 "summary": "",
                 "topics": [],
                 "intents": [],
             }
             
             # Extract intelligence features
-            if "results" in response:
-                results = response["results"]
-                if "summary" in results:
-                    result["summary"] = results["summary"].get("short", "")
-                if "topics" in results:
-                    topics_data = results["topics"]
-                    if "segments" in topics_data:
-                        for seg in topics_data["segments"]:
-                            for topic in seg.get("topics", []):
-                                result["topics"].append(topic.get("topic", ""))
-                if "intents" in results:
-                    intents_data = results["intents"]
-                    if "segments" in intents_data:
-                        for seg in intents_data["segments"]:
-                            for intent in seg.get("intents", []):
-                                result["intents"].append(intent.get("intent", ""))
+            if hasattr(response.results, "summary") and response.results.summary:
+                result["summary"] = getattr(response.results.summary, "short", "")
+            if hasattr(response.results, "topics") and response.results.topics:
+                for seg in getattr(response.results.topics, "segments", []):
+                    for topic in getattr(seg, "topics", []):
+                        result["topics"].append(getattr(topic, "topic", ""))
+            if hasattr(response.results, "intents") and response.results.intents:
+                for seg in getattr(response.results.intents, "segments", []):
+                    for intent in getattr(seg, "intents", []):
+                        result["intents"].append(getattr(intent, "intent", ""))
             
             return result
             
