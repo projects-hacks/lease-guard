@@ -12,10 +12,10 @@ export default function DownloadReportButton({ reportId }: Props) {
 
     const handleDownload = () => {
         setLoading(true);
-        // Direct navigation is often the most reliable way to trigger a download
-        // on iOS Safari, bypassing all blob and fetch restrictions.
-        // We use the Next.js API route proxy which points to the backend.
-        window.location.href = `/api/v1/generate/report/${reportId}`;
+        // Navigate to the Next.js API route that serves the PDF inline.
+        // iOS Safari will render the PDF natively with its built-in viewer,
+        // where the user can tap Share → "Save to Files" to save it.
+        window.open(`/api/download-report/${reportId}`, "_blank");
 
         // Reset loading state after a short delay since we can't reliably
         // detect when the native download finishes via window.location
