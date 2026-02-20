@@ -11,7 +11,7 @@ class DefectDetector:
         if not settings.GEMINI_API_KEY:
              raise ValueError("Gemini API Key is missing")
         self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
-        self.model = "gemini-3-flash-preview" # Updated to user-requested preview model
+        self.model = "gemini-3.1-pro-preview"
 
     def analyze_frame(self, frame_bytes: bytes, timestamp: float) -> dict | None:
         """
