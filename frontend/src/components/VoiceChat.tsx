@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Mic, Check, Loader2, Play, Square, Send, Link2 } from "lucide-react";
+import { Mic, Check, Loader2, Play, Square, Send, Link2, Info, Upload } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -16,6 +17,7 @@ interface Props {
 
 export default function VoiceChat({ leaseId }: Props) {
     const [isRecording, setIsRecording] = useState(false);
+    const [hintDismissed, setHintDismissed] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
         {
             role: "assistant",
@@ -123,6 +125,27 @@ export default function VoiceChat({ leaseId }: Props) {
                 <div className="px-4 py-2 bg-primary/10 border-b flex items-center gap-2 text-xs text-primary font-medium">
                     <Link2 className="w-3 h-3" />
                     Lease loaded — answers are based on YOUR lease clauses
+                </div>
+            )}
+
+            {/* No Lease Hint */}
+            {!leaseId && !hintDismissed && (
+                <div className="px-4 py-2.5 bg-amber-500/10 border-b flex items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-amber-700">
+                        <Info className="w-3.5 h-3.5 shrink-0" />
+                        <span>
+                            For personalized answers,{" "}
+                            <Link href="/upload" className="font-semibold underline underline-offset-2 hover:text-amber-900">
+                                upload your lease first
+                            </Link>
+                        </span>
+                    </div>
+                    <button
+                        onClick={() => setHintDismissed(true)}
+                        className="text-amber-600 hover:text-amber-800 font-medium shrink-0"
+                    >
+                        ✕
+                    </button>
                 </div>
             )}
 
