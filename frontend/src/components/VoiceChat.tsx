@@ -60,8 +60,19 @@ export default function VoiceChat({ leaseId }: Props) {
         });
     };
 
-    const startRecording = async () => {
+    const toggleRecording = async () => {
         if (isPlaying || isProcessing) return;
+
+        if (isRecording) {
+            // Tap again to stop
+            if (mediaRecorderRef.current) {
+                mediaRecorderRef.current.stop();
+                setIsRecording(false);
+            }
+            return;
+        }
+
+        // Tap to start
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             const mediaRecorder = new MediaRecorder(stream);
@@ -83,13 +94,6 @@ export default function VoiceChat({ leaseId }: Props) {
         } catch (err) {
             console.error("Mic access denied:", err);
             alert("Microphone access is required.");
-        }
-    };
-
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stop();
-            setIsRecording(false);
         }
     };
 
@@ -208,10 +212,7 @@ export default function VoiceChat({ leaseId }: Props) {
                     )}
 
                     <button
-                        onMouseDown={startRecording}
-                        onMouseUp={stopRecording}
-                        onTouchStart={startRecording}
-                        onTouchEnd={stopRecording}
+                        onClick={toggleRecording}
                         className={cn(
                             "relative z-10 w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl border border-white/10",
                             isRecording
