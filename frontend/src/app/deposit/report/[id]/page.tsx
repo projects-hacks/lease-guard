@@ -1,9 +1,10 @@
 import { client } from "@/lib/sanity";
 import { notFound } from "next/navigation";
-import { Camera, AlertCircle, CheckCircle, Download } from "lucide-react";
+import { Camera, CheckCircle } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import DownloadReportButton from "@/components/DownloadReportButton";
 
 interface Props {
     params: Promise<{ id: string }>;
@@ -48,14 +49,7 @@ export default async function ReportPage(props: Props) {
                         <Link href="/deposit" className="text-sm font-medium text-muted-foreground hover:text-primary pt-2">
                             New Inspection
                         </Link>
-                        <a
-                            href={`/api/v1/generate/report/${params.id}`}
-                            target="_blank"
-                            className="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md font-medium"
-                        >
-                            <Download className="w-4 h-4" />
-                            Download PDF
-                        </a>
+                        <DownloadReportButton reportId={params.id} />
                     </div>
                 </div>
 
