@@ -6,6 +6,7 @@ router = APIRouter()
 
 class RentRequest(BaseModel):
     zipCode: str
+    city: str | None = None
     state: str
     bedrooms: int
     price: float
@@ -18,7 +19,7 @@ async def analyze_rent(request: RentRequest):
     radar = RentRadar()
     try:
         # 1. Get market data from You.com
-        market_data = radar.search_comparables(request.zipCode, request.bedrooms, request.state)
+        market_data = radar.search_comparables(request.zipCode, request.bedrooms, request.state, request.city)
         
         # 2. Get rent control info from You.com
         rent_laws = radar.search_rent_laws(request.state, request.zipCode)

@@ -17,31 +17,33 @@ class RentRadar:
         if settings.GEMINI_API_KEY:
             self.gemini = genai.Client(api_key=settings.GEMINI_API_KEY)
 
-    def search_comparables(self, zip_code: str, bedrooms: int, state: str) -> dict:
+    def search_comparables(self, zip_code: str, bedrooms: int, state: str, city: str = None) -> dict:
         """
         Uses You.com Search API to find comparable rental listings and market data.
         Returns structured market analysis.
         """
         if not self.api_key:
             print("You.com API key missing, falling back to Gemini estimate")
-            return self._gemini_fallback(zip_code, bedrooms, state)
+            return self._gemini_fallback(zip_code, bedrooms, state, city)
+
+        location_str = f"{city + ', ' if city else ''}{state} {zip_code}"
 
         # Query 1: Search for comparable listings
         listings_query = (
-            f"apartments for rent {bedrooms} bedroom in zip code {zip_code} "
+            f"apartments for rent {bedrooms} bedroom in {location_str} "
             f"current listings with prices site:zillow.com OR site:apartments.com OR site:rent.com"
         )
 
         # Query 2: Average rent data for the area
         market_query = (
-            f"average rent {bedrooms} bedroom apartment {zip_code} {state} 2025 2026 median rent"
+            f"average rent {bedrooms} bedroom apartment {location_str} 2025 2026 median rent"
         )
 
         listings_result = self._you_search(listings_query)
         market_result = self._you_search(market_query)
 
         # Use Gemini to parse the search results into structured data
-        return self._parse_results(listings_result, market_result, zip_code, bedrooms, state)
+        return self._parse_results(listings_result, market_result, zip_code, bedrooms, state, city)
 
     def search_rent_laws(self, state: str, zip_code: str) -> dict:
         """
@@ -85,10 +87,11 @@ class RentRadar:
             print(f"You.com Search Error: {e}")
             return {"answer": "", "hits": []}
 
-    def _parse_results(self, listings: dict, market: dict, zip_code: str, bedrooms: int, state: str) -> dict:
+    def _parse_results(self, listings: dict, market: dict, zip_code: str, bedrooms: int, state: str, city: str = None) -> dict:
         """
         Uses Gemini to extract structured rent data from You.com search results.
         """
+        location_str = f"{city + ', ' if city else ''}{state} {zip_code}"
         prompt = f"""
         Based on these search results about rental prices, extract market data.
         
@@ -98,7 +101,7 @@ class RentRadar:
         SEARCH RESULT 2 (Market averages):
         {market.get("answer", "No results")}
         
-        TARGET: {bedrooms}-bedroom apartment in zip code {zip_code}, {state}
+        TARGET: {bedrooms}-bedroom apartment in {location_str}
         
         Return a JSON object:
         {{
@@ -131,10 +134,11 @@ class RentRadar:
             print(f"Gemini parse error: {e}")
             return self._gemini_fallback(zip_code, bedrooms, state)
 
-    def _gemini_fallback(self, zip_code: str, bedrooms: int, state: str) -> dict:
+    def _gemini_fallback(self, zip_code: str, bedrooms: int, state: str, city: str = None) -> dict:
         """Fallback when You.com is unavailable."""
+        location_str = f"{city + ', ' if city else ''}{state} {zip_code}"
         prompt = f"""
-        Estimate current market rent for a {bedrooms}-bedroom apartment in {zip_code}, {state}.
+        Estimate current market rent for a {bedrooms}-bedroom apartment in {location_str}.
         Return JSON: {{"average": int, "min": int, "max": int, "confidence": "low", 
         "comparables": [], "rent_control_applies": false, "max_legal_increase": null,
         "market_summary": "string"}}
