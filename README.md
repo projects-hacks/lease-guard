@@ -221,6 +221,6 @@ docker-compose up --build
 ### Deploy to LKE
 
 ```bash
-export KUBECONFIG=lke-kubeconfig.yaml
+export KUBECONFIG=path/to/your-kubeconfig.yaml
 kubectl apply -f k8s/
 ```
