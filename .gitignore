@@ -36,3 +36,6 @@ sanity/.sanity/
 .terraform/
 *.tfstate
 *.tfstate.backup
+
+# Cluster credentials never belong in the repo
+*kubeconfig*
